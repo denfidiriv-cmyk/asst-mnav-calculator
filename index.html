@@ -58,6 +58,8 @@ p { margin: 0; }
 .livenote { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--muted); margin-top: 8px; }
 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex: none; }
 .dot.on { background: var(--good); }
+.livenote a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.livenote + .livenote { margin-top: 2px; }
 .grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: stretch; }
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 24px; min-width: 0; }
 .result { display: flex; flex-direction: column; gap: 14px; justify-content: center; }
@@ -163,6 +165,7 @@ details.sec .content { padding-bottom: 20px; display: flex; flex-direction: colu
       <div class="hl"><dt>mNAV now</dt><dd id="lv-mnav">...</dd></div>
     </dl>
     <p class="livenote" aria-live="polite"><span class="dot" id="lv-dot"></span><span id="lv-note">Loading live prices...</span></p>
+    <p class="livenote"><span class="dot on" aria-hidden="true"></span><span id="co-note">Company data: Strive's 8-K filed Oct 26, 2026, as of Oct 23.</span></p>
   </section>
 
   <div class="grid">
@@ -215,7 +218,7 @@ details.sec .content { padding-bottom: 20px; display: flex; flex-direction: colu
     <details class="sec">
       <summary>Assumptions and limits</summary>
       <div class="content">
-        <p class="fine">Defaults are the starting numbers behind the net-asset grid in the author's post of 28 October 2026. Replace them with your own.</p>
+        <p class="fine">Company numbers come from Strive's latest 8-K and are checked twice a week. Prices are live. Replace any number with your own.</p>
         <div class="assump" id="assump"></div>
         <ul class="limits-list">
           <li><strong>Left out by default.</strong> Dividends on the preferred already outstanding, new common shares, operating costs and taxes. All of them would lower net assets per share.</li>
@@ -255,7 +258,7 @@ if (typeof module !== 'undefined') module.exports = { navCalc: navCalc, breakEve
 (function () {
   var state = {
     P: 80000, X: 1000,
-    U0: 43000, S0: 127328346, pref: 2103, cash: 267, divOld: 0, price: 27.14, pb: 80000, f: 93, d: 15
+    U0: 43000, S0: 127328346, pref: 2103.0176, cash: 504.4, divOld: 0, price: 27.14, pb: 80000, f: 93, d: 15
   };
   var nf = new Intl.NumberFormat("en-US", { maximumFractionDigits: 4 });
   function num(v, d) { return new Intl.NumberFormat("en-US", { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 }).format(v); }
@@ -270,11 +273,11 @@ if (typeof module !== 'undefined') module.exports = { navCalc: navCalc, breakEve
 
   var MAIN = [{ id: "P" }, { id: "X", zero: true }];
   var ASSUME = [
-    { id: "U0", label: "Bitcoin held now", suf: "BTC", hint: "43,000 BTC per Strive's 8-K of 26 October." },
-    { id: "S0", label: "Common shares", hint: "Basic shares outstanding." },
-    { id: "pref", label: "Preferred claims today", pre: "$", suf: "M", hint: "SATA $1,403M plus SATS $700M, at par." },
-    { id: "cash", label: "Cash and other assets", pre: "$", suf: "M", zero: true, hint: "Counted on top of Bitcoin." },
-    { id: "divOld", label: "Dividends on existing preferred over the year", pre: "$", suf: "M", zero: true, hint: "Left out in the post's grid. About $287M a year at today's rates." },
+    { id: "U0", label: "Bitcoin held now", suf: "BTC", hint: "From Strive's latest 8-K." },
+    { id: "S0", label: "Common shares", hint: "Class A plus Class B, from the latest 8-K." },
+    { id: "pref", label: "Preferred claims today", pre: "$", suf: "M", hint: "SATA and SATS shares at $100 par, from the latest 8-K." },
+    { id: "cash", label: "Cash", pre: "$", suf: "M", zero: true, hint: "Cash and cash equivalents from the latest 8-K." },
+    { id: "divOld", label: "Dividends on existing preferred over the year", pre: "$", suf: "M", zero: true, hint: "Left out by default. About $287M a year at today's rates." },
     { id: "price", label: "ASST price today", pre: "$", hint: "Used to color the grid." },
     { id: "pb", label: "Bitcoin price when new SATS is invested", pre: "$" },
     { id: "f", label: "Share of new SATS invested in Bitcoin", suf: "%", pct: true, hint: "The rest covers the issue discount, fees and reserves." },
@@ -482,7 +485,32 @@ if (typeof module !== 'undefined') module.exports = { navCalc: navCalc, breakEve
       .catch(function () { clearTimeout(timer); live.err = true; renderLive(); });
   }
 
+  function loadCompany() {
+    fetch("/data.json", { cache: "no-cache" })
+      .then(function (r) { if (!r.ok) throw new Error("status " + r.status); return r.json(); })
+      .then(function (d) {
+        var ok = d.btcHeld > 0 && d.commonShares > 0 && d.sataShares >= 0 && d.satsShares >= 0 && d.cashUsd >= 0;
+        if (!ok) return;
+        if (!userSet.U0) state.U0 = d.btcHeld;
+        if (!userSet.S0) state.S0 = d.commonShares;
+        if (!userSet.pref) state.pref = (d.sataShares + d.satsShares) * 100 / 1e6;
+        if (!userSet.cash) state.cash = d.cashUsd / 1e6;
+        var fmt = function (s) { var p = String(s).split("-"); return new Date(Date.UTC(+p[0], +p[1] - 1, +p[2])).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }); };
+        var note = document.getElementById("co-note");
+        note.textContent = "Company data: ";
+        var a = document.createElement("a");
+        a.href = d.filingUrl; a.target = "_blank"; a.rel = "noopener";
+        a.textContent = "Strive's 8-K filed " + fmt(d.filingDate);
+        note.appendChild(a);
+        note.appendChild(document.createTextNode(", as of " + fmt(d.asOf) + ". " + num(d.btcHeld) + " BTC, " + num(d.commonShares) + " shares."));
+        var el = document.activeElement;
+        render(el && el.id && el.id.indexOf("f-") === 0 ? el.id.slice(2) : undefined);
+      })
+      .catch(function () {});
+  }
+
   render();
+  loadCompany();
   loadLive();
   setInterval(function () { if (!document.hidden) loadLive(); }, 60000);
 })();
