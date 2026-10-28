@@ -1,8 +1,8 @@
-<title>ASST mNAV Calculator</title>
+<title>ASST Net Assets Calculator</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=JetBrains+Mono:wght@400;500&family=Public+Sans:wght@400;500;600&display=swap">
 <style>
-/* Layout: one question up top, inputs left and the answer right, then the arithmetic as a numbered walk-through. */
+/* Layout: two inputs and one answer side by side, the scenario grid under them, everything else folded away. */
 :root {
   --bg: #eef1f5;
   --surface: #ffffff;
@@ -12,12 +12,10 @@
   --soft: #f4f6f9;
   --accent: #2446d8;
   --accent-ink: #ffffff;
-  --accent-soft: #e6ebff;
-  --pref: #7a8699;
   --good: #11743f;
   --good-soft: #def3e6;
-  --warn: #9a5b00;
   --crit: #b3261e;
+  --crit-soft: #fbe3e1;
   --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   --font-body: "Public Sans", "Segoe UI", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
@@ -25,41 +23,35 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #0b1017; --surface: #131a24; --ink: #e8edf4; --muted: #95a1b3; --line: #263142; --soft: #18212d;
-    --accent: #8aa4ff; --accent-ink: #0b1017; --accent-soft: #1b2650; --pref: #7e8aa0;
-    --good: #5fd08c; --good-soft: #14301f; --warn: #e2a24a; --crit: #ff8a80;
+    --accent: #8aa4ff; --accent-ink: #0b1017; --good: #5fd08c; --good-soft: #14301f; --crit: #ff8a80; --crit-soft: #3a1714;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #0b1017; --surface: #131a24; --ink: #e8edf4; --muted: #95a1b3; --line: #263142; --soft: #18212d;
-  --accent: #8aa4ff; --accent-ink: #0b1017; --accent-soft: #1b2650; --pref: #7e8aa0;
-  --good: #5fd08c; --good-soft: #14301f; --warn: #e2a24a; --crit: #ff8a80;
+  --accent: #8aa4ff; --accent-ink: #0b1017; --good: #5fd08c; --good-soft: #14301f; --crit: #ff8a80; --crit-soft: #3a1714;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
-body {
-  background: var(--bg); color: var(--ink);
-  font-family: var(--font-body); font-size: 16px; line-height: 1.55;
-}
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.55; }
 .wrap {
-  max-width: 1040px; margin: 0 auto;
-  padding-block: 28px 56px;
+  max-width: 1040px; margin: 0 auto; padding-block: 28px 56px;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
-  display: flex; flex-direction: column; gap: 32px;
+  display: flex; flex-direction: column; gap: 28px;
 }
 h1, h2, h3 { font-family: var(--font-display); line-height: 1.12; margin: 0; text-wrap: balance; }
-h1 { font-size: clamp(1.8rem, 4.6vw, 2.9rem); font-weight: 700; letter-spacing: -0.01em; max-width: 20ch; }
-h2 { font-size: 1.5rem; font-weight: 700; }
-h3 { font-size: 1.05rem; font-weight: 600; }
+h1 { font-size: clamp(1.8rem, 4.6vw, 2.8rem); font-weight: 700; letter-spacing: -0.01em; max-width: 22ch; }
+h2 { font-size: 1.2rem; font-weight: 700; }
+h3 { font-size: 1.02rem; font-weight: 600; }
 p { margin: 0; }
-.eyebrow { font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
-.lede { color: var(--muted); max-width: 56ch; margin-top: 10px; }
-.top { display: flex; flex-direction: column; gap: 10px; }
+.lede { color: var(--muted); max-width: 58ch; margin-top: 10px; }
+.fine { color: var(--muted); font-size: 0.85rem; max-width: 70ch; }
+.label { font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 
 .grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 20px; align-items: start; }
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 22px; min-width: 0; }
-.inputs { display: flex; flex-direction: column; gap: 22px; }
+.stackcol { display: flex; flex-direction: column; gap: 22px; }
 .field { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .field label { font-weight: 600; font-size: 0.92rem; }
 .hint { color: var(--muted); font-size: 0.82rem; }
@@ -75,10 +67,13 @@ p { margin: 0; }
 .chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 .chip:focus-visible, .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-.result { display: flex; flex-direction: column; gap: 20px; position: sticky; top: calc(16px + env(safe-area-inset-top, 0px)); }
-.result .label { font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
-.big { font-family: var(--font-display); font-weight: 700; font-size: clamp(3.6rem, 11vw, 6rem); line-height: 1; letter-spacing: -0.02em; color: var(--accent); font-variant-numeric: tabular-nums; }
-.verdict { max-width: 52ch; }
+.result { display: flex; flex-direction: column; gap: 18px; position: sticky; top: calc(16px + env(safe-area-inset-top, 0px)); }
+.big { font-family: var(--font-display); font-weight: 700; font-size: clamp(3.4rem, 11vw, 5.6rem); line-height: 1; letter-spacing: -0.02em; color: var(--accent); font-variant-numeric: tabular-nums; margin-top: 4px; }
+.big.neg { color: var(--crit); }
+.delta { display: inline-block; align-self: flex-start; font-family: var(--font-mono); font-size: 0.88rem; padding: 4px 10px; border-radius: 6px; background: var(--soft); color: var(--muted); }
+.delta.up { background: var(--good-soft); color: var(--good); }
+.delta.down { background: var(--crit-soft); color: var(--crit); }
+.verdict { max-width: 54ch; }
 .verdict strong { font-weight: 600; }
 .err { color: var(--crit); font-weight: 500; }
 .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px 20px; margin: 0; }
@@ -89,44 +84,41 @@ p { margin: 0; }
 .btn:hover { border-color: var(--accent); }
 .copybox { width: 100%; font-family: var(--font-mono); font-size: 0.82rem; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--soft); color: var(--ink); resize: vertical; }
 
-.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
-.steps li { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 16px; padding: 16px 0; border-top: 1px solid var(--line); }
-.num { font-family: var(--font-mono); font-size: 0.9rem; color: var(--accent); padding-top: 3px; }
-.steps .body { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.steps p { color: var(--muted); max-width: 66ch; }
-.calc { font-family: var(--font-mono); font-size: 0.86rem; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; overflow-x: auto; }
-.calc span { white-space: nowrap; font-variant-numeric: tabular-nums; }
-.calc .res { color: var(--ink); font-weight: 500; }
-
 .tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
-table { border-collapse: collapse; width: 100%; min-width: 440px; font-variant-numeric: tabular-nums; }
-th, td { padding: 11px 14px; text-align: right; border-bottom: 1px solid var(--line); font-size: 0.92rem; }
+table { border-collapse: collapse; width: 100%; min-width: 460px; font-variant-numeric: tabular-nums; }
+th, td { padding: 10px 14px; text-align: right; border-bottom: 1px solid var(--line); font-size: 0.92rem; }
 th:first-child, td:first-child { text-align: left; }
 thead th { font-family: var(--font-mono); font-weight: 500; font-size: 0.78rem; color: var(--muted); background: var(--soft); }
-tbody tr:last-child td, tbody tr:last-child th { border-bottom: 0; }
-tbody th { font-family: var(--font-mono); font-weight: 500; }
+thead tr:first-child th { border-bottom: 0; padding-bottom: 2px; }
+tbody tr:last-child th, tbody tr:last-child td { border-bottom: 0; }
+tbody th { font-family: var(--font-mono); font-weight: 500; font-size: 0.88rem; }
 td { font-family: var(--font-mono); }
 td.ok { background: var(--good-soft); color: var(--good); }
+td.bad { background: var(--crit-soft); color: var(--crit); }
 td.sel { outline: 2px solid var(--accent); outline-offset: -2px; font-weight: 500; }
-
-.assump { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 20px; }
-.limits-list { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 8px; color: var(--muted); max-width: 70ch; font-size: 0.92rem; }
-.limits-list li strong { color: var(--ink); font-weight: 600; }
-
+tr.rowsel th { color: var(--accent); }
+tfoot th, tfoot td { background: var(--soft); border-top: 1px solid var(--line); border-bottom: 0; }
+tfoot th { font-family: var(--font-body); font-weight: 500; font-size: 0.85rem; color: var(--muted); }
+.key { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.82rem; color: var(--muted); }
+.key i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; }
 
 details.sec { border-top: 1px solid var(--line); }
-details.sec:last-of-type { border-bottom: 1px solid var(--line); }
-details.sec > summary, details.adv > summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-details.sec > summary::-webkit-details-marker, details.adv > summary::-webkit-details-marker { display: none; }
-details.sec > summary { padding: 16px 0; font-family: var(--font-display); font-size: 1.15rem; font-weight: 700; }
-details.adv > summary { padding-top: 16px; border-top: 1px solid var(--line); font-weight: 600; font-size: 0.92rem; }
+details.sec:last-child { border-bottom: 1px solid var(--line); }
+details.sec > summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 16px 0; font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; }
+details.sec > summary::-webkit-details-marker { display: none; }
 details > summary::after { content: "+"; font-family: var(--font-mono); color: var(--muted); }
 details[open] > summary::after { content: "-"; }
 details > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-details.sec .content { padding-bottom: 22px; display: flex; flex-direction: column; gap: 14px; }
-details.adv .content { display: flex; flex-direction: column; gap: 22px; padding-top: 18px; }
-.assump-h { font-weight: 600; font-size: 0.92rem; }
-.fine { color: var(--muted); font-size: 0.85rem; max-width: 70ch; }
+details.sec .content { padding-bottom: 22px; display: flex; flex-direction: column; gap: 16px; }
+.assump { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 20px; }
+.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.steps li { display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 12px; padding: 14px 0; border-top: 1px solid var(--line); }
+.num { font-family: var(--font-mono); font-size: 0.88rem; color: var(--accent); padding-top: 2px; }
+.steps .body { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.steps p { color: var(--muted); font-size: 0.92rem; max-width: 64ch; }
+.calc { font-family: var(--font-mono); font-size: 0.85rem; background: var(--soft); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; overflow-x: auto; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.limits-list { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 8px; color: var(--muted); max-width: 70ch; font-size: 0.92rem; }
+.limits-list strong { color: var(--ink); font-weight: 600; }
 
 .dock { display: none; }
 @media (max-width: 899px) {
@@ -136,162 +128,134 @@ details.adv .content { display: flex; flex-direction: column; gap: 22px; padding
   .dock {
     display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
-    background: var(--surface); border-top: 1px solid var(--line);
-    padding-top: 10px;
+    background: var(--surface); border-top: 1px solid var(--line); padding-top: 10px;
     padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
     padding-left: max(16px, env(safe-area-inset-left, 0px));
     padding-right: max(16px, env(safe-area-inset-right, 0px));
   }
   .dock span { font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
   .dock strong { font-family: var(--font-display); font-size: 1.7rem; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .dock strong.neg { color: var(--crit); }
 }
 @media (max-width: 560px) {
   .card { padding: 16px; }
   .assump { grid-template-columns: minmax(0, 1fr); }
-  .steps li { grid-template-columns: 28px minmax(0, 1fr); gap: 10px; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
 
 <main class="wrap">
-  <header class="top">
-    <h1>What mNAV does your $ASST price target require?</h1>
-    <p class="lede">Choose a target price and a Bitcoin scenario. The page shows what multiple of NAV the market has to pay for that price.</p>
+  <header>
+    <h1>What are $ASST net assets per share if Strive sells more SATS?</h1>
+    <p class="lede">Pick the Bitcoin price a year from now and how much new SATS is sold today. The page shows what each common share is backed by, and the Bitcoin price above which new SATS stops hurting common holders.</p>
   </header>
 
   <div class="grid">
-    <section class="card inputs" aria-label="Scenario inputs">
-      <div id="main-fields" class="inputs"></div>
-      <details class="adv">
-        <summary>Advanced assumptions</summary>
-        <div class="content">
-          <div id="adv-fields" class="inputs"></div>
-          <p class="assump-h">Starting point</p>
-          <p class="fine">Taken from the Grain of Salt SF calculator page dated 23 October 2026 and not checked against Strive's filings. Replace them with your own numbers. The Bitcoin start price is a hypothetical start of the scenario.</p>
-          <div class="assump" id="assump"></div>
-        </div>
-      </details>
+    <section class="card stackcol" aria-label="Scenario inputs">
+      <div id="main-fields" class="stackcol"></div>
     </section>
 
     <section class="card result" aria-label="Result">
       <div>
-        <p class="label">Required mNAV at the end</p>
+        <p class="label">Net assets per share in a year</p>
         <p class="big" id="big" aria-live="polite">...</p>
       </div>
+      <p class="delta" id="delta"></p>
       <p class="verdict" id="verdict"></p>
       <dl class="facts" id="facts"></dl>
       <button class="btn" id="copybtn" type="button">Copy summary</button>
       <textarea class="copybox" id="copybox" rows="4" readonly hidden aria-label="Summary text"></textarea>
-      <p class="fine">Scenario model, not a forecast or financial advice.</p>
     </section>
   </div>
+
+  <section class="stackcol" aria-labelledby="grid-h">
+    <h2 id="grid-h">All scenarios</h2>
+    <div class="tablewrap" id="sens"></div>
+    <div class="key" id="key"></div>
+  </section>
 
   <div>
     <details class="sec">
       <summary>How it is calculated</summary>
+      <div class="content"><ol class="steps" id="steps"></ol></div>
+    </details>
+    <details class="sec">
+      <summary>Assumptions you can change</summary>
       <div class="content">
-        <p class="fine">mNAV is the share price divided by NAV per common share. NAV is the Bitcoin value minus what preferred holders are owed. The steps use your current inputs.</p>
-        <ol class="steps" id="steps"></ol>
+        <p class="fine">Defaults are the starting numbers behind the net-asset grid in the author's post of 28 October 2026. Replace them with your own.</p>
+        <div class="assump" id="assump"></div>
       </div>
     </details>
     <details class="sec">
-      <summary>Other target prices</summary>
-      <div class="content">
-        <div class="tablewrap" id="sens"></div>
-        <p class="fine" id="sensnote"></p>
-      </div>
-    </details>
-    <details class="sec">
-      <summary>Limits and credit</summary>
+      <summary>Limits</summary>
       <div class="content">
         <ul class="limits-list">
-          <li><strong>No cash flows.</strong> Preferred dividends, interest, fees, operating costs and taxes are left out. All of them would lower NAV per share.</li>
-          <li><strong>Simplified financing.</strong> Preferred is valued at par and raised in proportion to the Bitcoin bought. New common is sold at the multiple you chose, every time.</li>
-          <li><strong>One price path.</strong> Bitcoin moves in a smooth curve from the start price to the ending price. A real path with swings would give different dilution.</li>
-          <li><strong>Credit.</strong> The idea of asking what mNAV a price target needs comes from the Grain of Salt SF calculator. This page uses its own simplified model, so its numbers will not match theirs exactly.</li>
+          <li><strong>Left out by default.</strong> Dividends on the preferred already outstanding, new common shares, operating costs and taxes. All of them would lower net assets per share. The field for existing dividends is in the assumptions.</li>
+          <li><strong>Simplified new SATS.</strong> It is sold today, a fixed share of its face value buys Bitcoin at today's price, and one year of its dividends is deducted.</li>
+          <li><strong>Preferred at par.</strong> Claims are counted at face value, with no market discount.</li>
+          <li><strong>Scenario, not forecast.</strong> The page shows what has to be true for a result. It is not financial advice.</li>
         </ul>
       </div>
     </details>
   </div>
 </main>
 
-<div class="dock" aria-hidden="true"><span>Required mNAV</span><strong id="dockval">...</strong></div>
+<div class="dock" aria-hidden="true"><span>Net assets / share</span><strong id="dockval">...</strong></div>
 
 <script>
-function runModel(p, m) {
-  var U0 = p.U0, S0 = p.S0, p0 = p.p0, g = p.g, pT = p.pT, UT = p.UT, A = p.A;
-  var B0 = U0 * p0, P0 = A * B0, C0 = B0 - P0;
-  var BT = UT * pT, PT = A * BT, CT = BT - PT;
-  var grows = UT > U0;
-  var T = grows ? Math.log(UT / U0) / Math.log(1 + g) : 0;
-  var S = S0, U = U0, P = P0, spend = 0, common = 0, ok = true, negRaise = false;
-  var N = 2000;
-  if (grows) {
-    var dt = T / N, growth = Math.pow(1 + g, dt) - 1, ratio = Math.pow(pT / p0, 1 / N);
-    var price = p0;
-    for (var i = 0; i < N; i++) {
-      var mid = price * Math.sqrt(ratio);
-      var dU = U * growth;
-      var sp = dU * mid;
-      var dP = (PT - P0) * dU / (UT - U0);
-      var Rc = sp - dP;
-      var nav = (U * price - P) / S;
-      if (!(nav > 0)) { ok = false; break; }
-      if (Rc < 0) negRaise = true;
-      S += Math.max(Rc, 0) / (m * nav);
-      U += dU; P += dP; spend += sp; common += Rc; price *= ratio;
-    }
-  }
-  return {
-    ok: ok && CT > 0, negRaise: negRaise, grows: grows, B0: B0, P0: P0, C0: C0, BT: BT, PT: PT, CT: CT,
-    T: T, S: S, steps: N, spend: spend, common: common, prefRaised: PT - P0,
-    boughtBTC: Math.max(UT - U0, 0), avgPrice: grows ? spend / (UT - U0) : 0,
-    navStart: C0 / S0, navEnd: CT / S, dilution: S / S0 - 1
-  };
+/* Net assets per common share one year out.
+   nav = (BTC value + cash - preferred claims) / shares.
+   New SATS of face value X: claim = X + first-year dividends; a share f of X buys BTC at pb. */
+function navCalc(s, P, X) {
+  var Xd = X * 1e6;
+  var bought = s.f > 0 ? Xd * s.f / s.pb : 0;
+  var btc = s.U0 + bought;
+  var assets = btc * P + s.cash * 1e6;
+  var claims = s.pref * 1e6 + s.divOld * 1e6 + Xd * (1 + s.d);
+  return { bought: bought, btc: btc, btcValue: btc * P, assets: assets, claims: claims, newClaims: Xd * (1 + s.d), net: assets - claims, nav: (assets - claims) / s.S0 };
 }
-function todayMnav(p, A) {
-  var nav = (p.U0 * p.todayBTC * (1 - A)) / p.S0;
-  return { nav: nav, mnav: p.todayPrice / nav };
+function breakEven(s) { return s.f > 0 ? s.pb * (1 + s.d) / s.f : NaN; }
+function btcNeeded(s, X, target) {
+  var Xd = X * 1e6;
+  var btc = s.U0 + (s.f > 0 ? Xd * s.f / s.pb : 0);
+  var claims = s.pref * 1e6 + s.divOld * 1e6 + Xd * (1 + s.d);
+  return (target * s.S0 + claims - s.cash * 1e6) / btc;
 }
-if (typeof module !== 'undefined') module.exports = { runModel: runModel, todayMnav: todayMnav };
+if (typeof module !== 'undefined') module.exports = { navCalc: navCalc, breakEven: breakEven, btcNeeded: btcNeeded };
 
 
 (function () {
   var state = {
-    target: 300, pT: 200000, UT: 125000, A: 10, m: 2,
-    U0: 43000, S0: 127328346, p0: 100000, g: 25, todayPrice: 25.64, todayBTC: 82330
+    P: 80000, X: 1000,
+    U0: 43000, S0: 127328346, pref: 2103, cash: 267, divOld: 0, price: 27.14, pb: 80000, f: 93, d: 15
   };
   var nf = new Intl.NumberFormat("en-US", { maximumFractionDigits: 4 });
   function num(v, d) { return new Intl.NumberFormat("en-US", { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 }).format(v); }
-  function usd(v, d) { return "$" + num(v, d == null ? 2 : d); }
-  function big(v) {
-    var a = Math.abs(v);
-    if (a >= 1e9) return "$" + (v / 1e9).toFixed(2) + "B";
-    if (a >= 1e6) return "$" + (v / 1e6).toFixed(2) + "M";
-    return usd(v, 0);
+  function usd(v, d) { d = d == null ? 2 : d; return (v < 0 ? "-$" : "$") + num(Math.abs(v), d); }
+  function mil(m) {
+    var a = Math.abs(m), s = m < 0 ? "-" : "";
+    if (a >= 1000) return s + "$" + parseFloat((a / 1000).toFixed(2)) + "B";
+    return s + "$" + parseFloat(a.toFixed(1)) + "M";
   }
-  function x(v, d) { return v.toFixed(d == null ? 2 : d) + "x"; }
+  function bigD(v) { return mil(v / 1e6); }
+  function kfmt(v) { return "$" + num(Math.round(v / 1000)) + "K"; }
 
-  var MAIN_ALL = [
-    { id: "target", label: "Target ASST price", pre: "$", chips: [50, 75, 100, 150, 200, 250, 300, 400], hint: "The share price you want to test." },
-    { id: "pT", label: "Ending BTC price", pre: "$", chips: [100000, 125000, 150000, 175000, 200000, 225000, 250000, 300000], hint: "Bitcoin price when the company reaches the holdings below." },
-    { id: "UT", label: "Ending BTC holdings", suf: "BTC", chips: [50000, 75000, 100000, 125000, 150000, 175000, 200000, 300000], hint: "Must be higher than the starting holdings." },
-    { id: "A", label: "Preferred amplification", suf: "%", chips: [0, 10, 20, 30, 40, 50, 60, 70], hint: "Preferred claims as a share of Bitcoin value. 0% means no preferred." },
-    { id: "m", label: "Issuance mNAV for new common", suf: "x", chips: [1, 1.25, 1.5, 1.75, 2], hint: "New shares are sold at this multiple of NAV per share. Higher means less dilution." }
+  var MAIN = [
+    { id: "P", label: "Bitcoin price in a year", pre: "$", chips: [50000, 60000, 70000, 80000, 100000, 120000, 150000], chip: function (c) { return kfmt(c); }, hint: "Where Bitcoin trades at the end of the year." },
+    { id: "X", label: "New SATS sold now", pre: "$", suf: "M", zero: true, chips: [0, 250, 500, 1000, 2000], chip: function (c) { return c === 0 ? "None" : mil(c); }, hint: "Face value, in millions of dollars. Strive sold $700M of SATS on 20 October." }
   ];
-  var MAIN = MAIN_ALL.slice(0, 3), ADV = MAIN_ALL.slice(3);
   var ASSUME = [
-    { id: "U0", label: "Starting BTC holdings", suf: "BTC" },
-    { id: "S0", label: "Starting basic common shares" },
-    { id: "p0", label: "Starting BTC price (hypothetical)", pre: "$" },
-    { id: "g", label: "BTC holdings growth per quarter", suf: "%" },
-    { id: "todayPrice", label: "ASST price today", pre: "$" },
-    { id: "todayBTC", label: "BTC price today", pre: "$" }
+    { id: "U0", label: "Bitcoin held now", suf: "BTC", hint: "43,000 BTC per Strive's 8-K of 26 October." },
+    { id: "S0", label: "Common shares", hint: "Basic shares outstanding." },
+    { id: "pref", label: "Preferred claims today", pre: "$", suf: "M", hint: "SATA $1,403M plus SATS $700M, at par." },
+    { id: "cash", label: "Cash and other assets", pre: "$", suf: "M", zero: true, hint: "Counted on top of Bitcoin." },
+    { id: "divOld", label: "Dividends on existing preferred over the year", pre: "$", suf: "M", zero: true, hint: "Left out in the post's grid. At today's rates it is about $287M a year." },
+    { id: "price", label: "ASST price today", pre: "$", hint: "Used to color the grid and compare." },
+    { id: "pb", label: "Bitcoin price when new SATS is invested", pre: "$" },
+    { id: "f", label: "Share of new SATS invested in Bitcoin", suf: "%", pct: true, hint: "The rest covers the issue discount, fees and reserves." },
+    { id: "d", label: "Dividends on new SATS in the first year", suf: "%", pct: true, zero: true, hint: "As a share of face value." }
   ];
-  var ASSUME_HINT = {
-    todayPrice: "Used only for today's mNAV. Default is the 15 Oct 2026 close.",
-    todayBTC: "Used only for today's mNAV. Default is the 15 Oct 2026 reference."
-  };
+  var all = MAIN.concat(ASSUME);
 
   function fieldHTML(f, withChips) {
     var h = '<div class="field"><label for="f-' + f.id + '">' + f.label + '</label>';
@@ -301,44 +265,38 @@ if (typeof module !== 'undefined') module.exports = { runModel: runModel, todayM
     if (withChips) {
       h += '<div class="chips" role="group" aria-label="' + f.label + ' presets">';
       f.chips.forEach(function (c) {
-        var t = f.pre === "$" ? "$" + num(c) : (f.suf === "%" ? c + "%" : (f.suf === "x" ? c.toFixed(2) + "x" : num(c)));
-        h += '<button class="chip" type="button" data-f="' + f.id + '" data-v="' + c + '" aria-pressed="false">' + t + '</button>';
+        h += '<button class="chip" type="button" data-f="' + f.id + '" data-v="' + c + '" aria-pressed="false">' + f.chip(c) + '</button>';
       });
       h += '</div>';
     }
-    var hint = f.hint || ASSUME_HINT[f.id];
-    if (hint) h += '<p class="hint">' + hint + '</p>';
+    if (f.hint) h += '<p class="hint">' + f.hint + '</p>';
     return h + '</div>';
   }
   document.getElementById("main-fields").innerHTML = MAIN.map(function (f) { return fieldHTML(f, true); }).join("");
-  document.getElementById("adv-fields").innerHTML = ADV.map(function (f) { return fieldHTML(f, true); }).join("");
   document.getElementById("assump").innerHTML = ASSUME.map(function (f) { return fieldHTML(f, false); }).join("");
 
   function parse(s) {
-    var t = String(s).replace(/[$,\s%x]/gi, "");
-    if (t === "" || !/^-?\d*\.?\d*$/.test(t)) return NaN;
+    var t = String(s).replace(/[$,\s%]/g, "");
+    if (t === "" || !/^\d*\.?\d*$/.test(t)) return NaN;
     return parseFloat(t);
   }
-  var all = MAIN_ALL.concat(ASSUME);
   var invalid = {};
+  function isBad(f, v) { return isNaN(v) || v < 0 || (!f.zero && v === 0) || (f.pct && v > 100); }
 
   function syncInputs(skipId) {
     all.forEach(function (f) {
-      var el = document.getElementById("f-" + f.id);
-      if (f.id !== skipId) el.value = nf.format(state[f.id]);
+      if (f.id !== skipId) document.getElementById("f-" + f.id).value = nf.format(state[f.id]);
     });
     document.querySelectorAll(".chip").forEach(function (c) {
       c.setAttribute("aria-pressed", String(parseFloat(c.dataset.v) === state[c.dataset.f]));
     });
   }
-
   all.forEach(function (f) {
     var el = document.getElementById("f-" + f.id);
     el.addEventListener("input", function () {
-      var v = parse(el.value);
-      var bad = isNaN(v) || (f.id === "A" ? (v < 0 || v >= 100) : v <= 0);
+      var v = parse(el.value), bad = isBad(f, v);
       document.getElementById("w-" + f.id).classList.toggle("bad", bad);
-      if (bad) { invalid[f.id] = true; } else { delete invalid[f.id]; state[f.id] = v; }
+      if (bad) invalid[f.id] = true; else { delete invalid[f.id]; state[f.id] = v; }
       render(f.id);
     });
     el.addEventListener("blur", function () {
@@ -348,111 +306,106 @@ if (typeof module !== 'undefined') module.exports = { runModel: runModel, todayM
       render();
     });
   });
-  document.querySelector(".inputs").parentElement.addEventListener("click", function (e) {
+  document.getElementById("main-fields").addEventListener("click", function (e) {
     var b = e.target.closest(".chip");
     if (!b) return;
-    var id = b.dataset.f;
-    state[id] = parseFloat(b.dataset.v);
-    delete invalid[id];
-    document.getElementById("w-" + id).classList.remove("bad");
+    state[b.dataset.f] = parseFloat(b.dataset.v);
+    delete invalid[b.dataset.f];
+    document.getElementById("w-" + b.dataset.f).classList.remove("bad");
     render();
   });
 
   function pars() {
-    return { U0: state.U0, S0: state.S0, p0: state.p0, g: state.g / 100, pT: state.pT, UT: state.UT, A: state.A / 100, todayPrice: state.todayPrice, todayBTC: state.todayBTC };
+    return { U0: state.U0, S0: state.S0, pref: state.pref, cash: state.cash, divOld: state.divOld, price: state.price, pb: state.pb, f: state.f / 100, d: state.d / 100 };
   }
 
   var lastSummary = "";
   function render(skipId) {
     syncInputs(skipId);
-    var bigEl = document.getElementById("big"), dock = document.getElementById("dockval"), verdict = document.getElementById("verdict");
-    var facts = document.getElementById("facts");
-    var p = pars();
-    var r = runModel(p, state.m);
-    var problem = null;
-    if (Object.keys(invalid).length) problem = "Fix the highlighted field. Every value must be a positive number, and amplification must be below 100%.";
-    else if (!r.grows) problem = "Ending BTC holdings must be higher than the starting holdings (" + num(state.U0) + " BTC). With no growth there is nothing to issue shares for.";
-    else if (!r.ok) problem = "On this path NAV per share would fall to zero or below. Lower the amplification or raise the ending BTC price.";
-    if (problem) {
-      bigEl.textContent = "n/a"; dock.textContent = "n/a";
-      verdict.innerHTML = '<span class="err">' + problem + '</span>';
-      facts.innerHTML = "";
-      document.getElementById("steps").innerHTML = "";
-      document.getElementById("sens").innerHTML = "";
-      document.getElementById("sensnote").textContent = "";
+    var bigEl = document.getElementById("big"), dock = document.getElementById("dockval");
+    var verdict = document.getElementById("verdict"), delta = document.getElementById("delta"), facts = document.getElementById("facts");
+    if (Object.keys(invalid).length) {
+      bigEl.textContent = "n/a"; dock.textContent = "n/a"; bigEl.classList.remove("neg"); dock.classList.remove("neg");
+      delta.hidden = true; facts.innerHTML = "";
+      verdict.innerHTML = '<span class="err">Fix the highlighted field. It needs a positive number, and percentages cannot exceed 100.</span>';
       lastSummary = "";
       return;
     }
-    var req = state.target / r.navEnd;
-    var td = todayMnav(p, p.A);
-    bigEl.textContent = x(req); dock.textContent = x(req);
-    var priceAtToday = r.navEnd * td.mnav;
-    verdict.innerHTML = "To reach <strong>" + usd(state.target) + "</strong> a share, the market has to pay <strong>" + x(req) + "</strong> NAV per share. Today it pays " + x(td.mnav) + " on the same measure, so the target needs about " + (req / td.mnav).toFixed(1) + " times the current multiple.";
+    delta.hidden = false;
+    var s = pars();
+    var r = navCalc(s, state.P, state.X), r0 = navCalc(s, state.P, 0);
+    var be = breakEven(s), d = r.nav - r0.nav;
+    var txt = usd(r.nav);
+    bigEl.textContent = txt; dock.textContent = txt;
+    bigEl.classList.toggle("neg", r.nav < 0); dock.classList.toggle("neg", r.nav < 0);
 
+    if (state.X === 0) {
+      delta.className = "delta"; delta.textContent = "No new SATS";
+      verdict.innerHTML = r.nav < 0
+        ? "At Bitcoin " + usd(state.P, 0) + " the preferred claims are larger than the assets, so common holders are left with nothing."
+        : "At Bitcoin <strong>" + usd(state.P, 0) + "</strong> each share is backed by <strong>" + txt + "</strong> of net assets. That is " + Math.round(r.nav / state.price * 100) + "% of today's " + usd(state.price) + " price.";
+    } else {
+      delta.className = "delta " + (d > 0 ? "up" : (d < 0 ? "down" : ""));
+      delta.textContent = (d >= 0 ? "+" : "") + usd(d) + " vs no new SATS";
+      var tail = isFinite(be) ? (state.P > be ? " Bitcoin is above " + usd(be, 0) + ", so the new SATS adds to net assets per share." : " New SATS helps common holders only if Bitcoin ends the year above " + usd(be, 0) + ".") : "";
+      verdict.innerHTML = "At Bitcoin <strong>" + usd(state.P, 0) + "</strong>, selling <strong>" + mil(state.X) + "</strong> of new SATS " + (d < 0 ? "lowers" : "raises") + " net assets per share by <strong>" + usd(Math.abs(d)) + "</strong> compared with selling none." + tail;
+    }
+    var need = btcNeeded(s, state.X, state.price);
     facts.innerHTML =
-      '<div><dt>NAV per share, start to end</dt><dd>' + usd(r.navStart) + ' to ' + usd(r.navEnd) + '</dd></div>' +
-      '<div><dt>Ending common shares</dt><dd>' + num(r.S) + ' (+' + (r.dilution * 100).toFixed(1) + '%)</dd></div>' +
-      '<div><dt>Price if mNAV stays at ' + x(td.mnav) + '</dt><dd>' + usd(priceAtToday) + '</dd></div>';
+      '<div><dt>ASST today, as a multiple of this</dt><dd>' + (r.nav > 0 ? (state.price / r.nav).toFixed(2) + "x" : "n/a") + '</dd></div>' +
+      '<div><dt>Bitcoin needed to reach ' + usd(state.price) + '</dt><dd>' + usd(need, 0) + '</dd></div>' +
+      '<div><dt>New SATS stops hurting above</dt><dd>' + (isFinite(be) ? usd(be, 0) : "n/a") + '</dd></div>';
 
-    renderSteps(r, req, td);
-    renderSens(p, req, td);
-    lastSummary = "$ASST target check: " + usd(state.target) + " a share needs " + x(req) + " NAV per share when BTC is " + usd(state.pT, 0) + " and holdings reach " + num(state.UT) +
-      " BTC (preferred = " + nf.format(state.A) + "% of BTC value, new shares sold at " + x(state.m) + "). Scenario model, not a forecast.";
+    renderGrid(s);
+    renderSteps(r);
+    lastSummary = "$ASST net assets per share in a year: " + txt + " at Bitcoin " + usd(state.P, 0) + (state.X > 0 ? " with " + mil(state.X) + " of new SATS sold now (" + usd(r0.nav) + " with none)" : " with no new SATS") +
+      (isFinite(be) ? ". New SATS helps common holders only above Bitcoin " + usd(be, 0) + "." : ".") + " Scenario model, not a forecast.";
   }
 
-  function renderSteps(r, req, td) {
-    var g = state.g / 100;
-    var items = [
-      ["Value the Bitcoin at the end.",
-        "Ending holdings times the ending Bitcoin price.",
-        [num(state.UT) + " BTC x " + usd(state.pT, 0) + " = " + big(r.BT)]],
-      ["Take out the preferred.",
-        "Preferred stock is paid before common, so its claims come off first. This page sizes the claims as " + nf.format(state.A) + "% of Bitcoin value. Whatever is left belongs to the common shares.",
-        [big(r.BT) + " x " + nf.format(state.A) + "% = " + big(r.PT) + " preferred claims", big(r.BT) + " - " + big(r.PT) + " = " + big(r.CT) + " common NAV"]],
-      ["Find how long the growth takes.",
-        "Holdings grow " + nf.format(state.g) + "% every quarter from " + num(state.U0) + " BTC, compounding.",
-        ["ln(" + num(state.UT) + " / " + num(state.U0) + ") / ln(" + (1 + g).toFixed(2) + ") = " + r.T.toFixed(2) + " quarters (" + (r.T / 4).toFixed(2) + " years)"]],
-      ["Work out what the purchases cost.",
-        "Bitcoin moves in a smooth curve from " + usd(state.p0, 0) + " to " + usd(state.pT, 0) + " over that time, and each purchase is paid at that moment's price. Most coins are bought late, at higher prices. New preferred covers the difference between the ending and starting claims. New common covers the rest.",
-        [num(r.boughtBTC) + " BTC bought at an average of " + usd(r.avgPrice, 0) + " = " + big(r.spend),
-         "Preferred raised: " + big(r.PT) + " - " + big(r.P0) + " = " + big(r.prefRaised),
-         "Common raised: " + big(r.spend) + " - " + big(r.prefRaised) + " = " + big(r.common)]],
-      ["Count the new shares.",
-        "New common is sold at " + x(state.m) + " the NAV per share of that moment. The page walks along the path in " + num(r.steps) + " small steps, issues shares in each one and adds them up. A lower issuance multiple means more shares and a lower NAV per share.",
-        [num(state.S0) + " + " + num(r.S - state.S0) + " = " + num(r.S) + " shares (+" + (r.dilution * 100).toFixed(2) + "%)"]],
-      ["Divide the common NAV by the shares.",
-        "This is what one share is worth in Bitcoin terms at the end.",
-        [big(r.CT) + " / " + num(r.S) + " = " + usd(r.navEnd) + " NAV per share (start: " + usd(r.navStart) + ")"]],
-      ["Compare with the target.",
-        "The price you want, divided by NAV per share. If the market pays less than this multiple, the price is not reached.",
-        [usd(state.target) + " / " + usd(r.navEnd) + " = " + x(req)]]
-    ];
-    document.getElementById("steps").innerHTML = items.map(function (it, i) {
-      var last = it[2].length - 1;
-      return '<li><span class="num">' + String(i + 1).padStart(2, "0") + '</span><div class="body"><h3>' + it[0] + '</h3><p>' + it[1] + '</p><div class="calc">' +
-        it[2].map(function (l, j) { return '<span' + (i === items.length - 1 && j === last ? ' class="res"' : '') + '>' + l + '</span>'; }).join("") + '</div></div></li>';
-    }).join("");
-  }
-
-  function renderSens(p, req, td) {
-    var ms = [1, 1.5, 2, 2.5];
-    if (ms.indexOf(state.m) < 0) { ms.push(state.m); ms.sort(function (a, b) { return a - b; }); }
-    var ts = [50, 100, 150, 200, 300, 400];
-    if (ts.indexOf(state.target) < 0) { ts.push(state.target); ts.sort(function (a, b) { return a - b; }); }
-    var navs = ms.map(function (m) { return runModel(p, m).navEnd; });
-    var h = '<table><thead><tr><th scope="col">Target price</th>' + ms.map(function (m) { return '<th scope="col">new shares at ' + x(m) + '</th>'; }).join("") + '</tr></thead><tbody>';
-    ts.forEach(function (t) {
-      h += '<tr><th scope="row">' + usd(t, t % 1 ? 2 : 0) + '</th>';
-      ms.forEach(function (m, i) {
-        var v = t / navs[i], cls = [];
-        if (v <= td.mnav) cls.push("ok");
-        if (t === state.target && m === state.m) cls.push("sel");
-        h += '<td' + (cls.length ? ' class="' + cls.join(" ") + '"' : '') + '>' + x(v) + '</td>';
+  function renderGrid(s) {
+    var Ps = [50000, 60000, 70000, 80000, 100000, 120000, 150000];
+    if (Ps.indexOf(state.P) < 0) { Ps.push(state.P); Ps.sort(function (a, b) { return a - b; }); }
+    var Xs = [0, 500, 1000, 2000];
+    if (Xs.indexOf(state.X) < 0) { Xs.push(state.X); Xs.sort(function (a, b) { return a - b; }); }
+    var h = '<table><thead><tr><th scope="col"></th><th scope="colgroup" colspan="' + Xs.length + '">New SATS sold now</th></tr><tr><th scope="col">Bitcoin in a year</th>' +
+      Xs.map(function (x) { return '<th scope="col">' + (x === 0 ? "None" : mil(x)) + '</th>'; }).join("") + '</tr></thead><tbody>';
+    Ps.forEach(function (p) {
+      h += '<tr' + (p === state.P ? ' class="rowsel"' : '') + '><th scope="row">' + usd(p, 0) + (p === state.pb ? " (about today)" : "") + '</th>';
+      Xs.forEach(function (x) {
+        var v = navCalc(s, p, x).nav, cls = [];
+        if (v >= state.price) cls.push("ok"); else if (v < 0) cls.push("bad");
+        if (p === state.P && x === state.X) cls.push("sel");
+        h += '<td' + (cls.length ? ' class="' + cls.join(" ") + '"' : '') + '>' + usd(v) + '</td>';
       });
       h += '</tr>';
     });
-    document.getElementById("sens").innerHTML = h + '</tbody></table>';
-    document.getElementById("sensnote").textContent = "Green cells are at or below today's mNAV on this definition: " + x(td.mnav) + " (ASST " + usd(state.todayPrice) + ", BTC " + usd(state.todayBTC, 0) + ", " + nf.format(state.A) + "% preferred). The outlined cell is your current selection.";
+    h += '</tbody><tfoot><tr><th scope="row">Bitcoin needed to reach ' + usd(state.price) + '</th>' +
+      Xs.map(function (x) { return '<td>~' + kfmt(btcNeeded(s, x, state.price)) + '</td>'; }).join("") + '</tr></tfoot></table>';
+    document.getElementById("sens").innerHTML = h;
+    document.getElementById("key").innerHTML =
+      '<span><i style="background:var(--good-soft);border:1px solid var(--good)"></i>At or above today\'s ASST price ' + usd(state.price) + '</span>' +
+      '<span><i style="background:var(--crit-soft);border:1px solid var(--crit)"></i>Preferred claims exceed the assets</span>';
+  }
+
+  function renderSteps(r) {
+    var X$ = state.X * 1e6;
+    var items = [
+      ["Add the Bitcoin bought with new SATS.",
+        "Part of the face value is invested in Bitcoin at today's price. The rest covers the issue discount, fees and reserves.",
+        num(state.U0) + " BTC + " + bigD(X$) + " x " + state.f + "% / " + usd(state.pb, 0) + " = " + num(r.btc) + " BTC"],
+      ["Value the Bitcoin at the year-end price.",
+        "Holdings times the price you picked, plus cash and other assets.",
+        num(r.btc) + " BTC x " + usd(state.P, 0) + " = " + bigD(r.btcValue) + ", plus " + mil(state.cash) + " = " + bigD(r.assets)],
+      ["Subtract everything owed to preferred holders first.",
+        "Existing preferred at par, the face value of the new SATS and a year of its dividends.",
+        mil(state.pref) + " + " + bigD(X$) + " + " + bigD(X$ * state.d / 100) + " dividends" + (state.divOld ? " + " + mil(state.divOld) + " existing dividends" : "") + " = " + bigD(r.claims)],
+      ["Divide what is left by the common shares.",
+        "Net assets are what belongs to common holders.",
+        bigD(r.net) + " / " + num(state.S0) + " shares = " + usd(r.nav) + " per share"]
+    ];
+    document.getElementById("steps").innerHTML = items.map(function (it, i) {
+      return '<li><span class="num">' + String(i + 1).padStart(2, "0") + '</span><div class="body"><h3>' + it[0] + '</h3><p>' + it[1] + '</p><div class="calc">' + it[2] + '</div></div></li>';
+    }).join("");
   }
 
   var copybtn = document.getElementById("copybtn"), copybox = document.getElementById("copybox");
