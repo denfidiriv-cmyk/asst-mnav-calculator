@@ -48,6 +48,16 @@ p { margin: 0; }
 .fine { color: var(--muted); font-size: 0.85rem; max-width: 70ch; }
 .label { font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 
+.live { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.live > div { padding: 14px 18px; border-left: 1px solid var(--line); min-width: 0; }
+.live > div:first-child { border-left: 0; }
+.live dt { font-size: 0.8rem; font-weight: 500; color: var(--muted); }
+.live dd { margin: 4px 0 0; font-family: var(--font-display); font-weight: 700; font-size: 1.35rem; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.live .hl { background: var(--soft); }
+.live .hl dd { color: var(--accent); font-size: 1.6rem; }
+.livenote { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--muted); margin-top: 8px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex: none; }
+.dot.on { background: var(--good); }
 .grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: stretch; }
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 24px; min-width: 0; }
 .result { display: flex; flex-direction: column; gap: 14px; justify-content: center; }
@@ -132,6 +142,9 @@ details.sec .content { padding-bottom: 20px; display: flex; flex-direction: colu
   .result { order: -1; }
   .card { padding: 18px; }
   .assump { grid-template-columns: minmax(0, 1fr); }
+  .live { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .live > div:nth-child(3) { border-left: 0; }
+  .live > div:nth-child(n+3) { border-top: 1px solid var(--line); }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
@@ -141,6 +154,16 @@ details.sec .content { padding-bottom: 20px; display: flex; flex-direction: colu
     <h1>$ASST net assets per share in a year</h1>
     <p class="lede">Move the sliders to see what each share is backed by when Strive sells new SATS.</p>
   </header>
+
+  <section aria-label="Live prices">
+    <dl class="live" id="live">
+      <div><dt>ASST price now</dt><dd id="lv-asst">...</dd></div>
+      <div><dt>Bitcoin now</dt><dd id="lv-btc">...</dd></div>
+      <div><dt>Net assets per share now</dt><dd id="lv-nav">...</dd></div>
+      <div class="hl"><dt>mNAV now</dt><dd id="lv-mnav">...</dd></div>
+    </dl>
+    <p class="livenote" aria-live="polite"><span class="dot" id="lv-dot"></span><span id="lv-note">Loading live prices...</span></p>
+  </section>
 
   <div class="grid">
     <section class="card inputs" aria-label="Scenario inputs">
@@ -168,7 +191,7 @@ details.sec .content { padding-bottom: 20px; display: flex; flex-direction: colu
     </section>
 
     <section class="card result" aria-label="Result">
-      <p class="label">Net assets per share</p>
+      <p class="label">Net assets per share in a year</p>
       <p class="big" id="big" aria-live="polite">...</p>
       <p class="delta" id="delta"></p>
       <p class="verdict" id="verdict"></p>
@@ -198,6 +221,7 @@ details.sec .content { padding-bottom: 20px; display: flex; flex-direction: colu
           <li><strong>Left out by default.</strong> Dividends on the preferred already outstanding, new common shares, operating costs and taxes. All of them would lower net assets per share.</li>
           <li><strong>Simplified new SATS.</strong> It is sold today, a fixed share of its face value buys Bitcoin at today's price, and one year of its dividends is deducted.</li>
           <li><strong>Preferred at par.</strong> Claims are counted at face value.</li>
+          <li><strong>mNAV on this page.</strong> The ASST price divided by net assets per share today: Bitcoin held at the live price plus cash, minus preferred claims, divided by common shares. Other sources define mNAV differently, so their numbers can differ.</li>
           <li><strong>Scenario, not forecast.</strong> The page shows what has to be true for a result. It is not financial advice.</li>
         </ul>
       </div>
@@ -271,7 +295,7 @@ if (typeof module !== 'undefined') module.exports = { navCalc: navCalc, breakEve
     if (t === "" || !/^\d*\.?\d*$/.test(t)) return NaN;
     return parseFloat(t);
   }
-  var invalid = {};
+  var invalid = {}, userSet = {};
   function isBad(f, v) { return isNaN(v) || v < 0 || (!f.zero && v === 0) || (f.pct && v > 100); }
 
   var rP = document.getElementById("r-P"), rX = document.getElementById("r-X");
@@ -286,7 +310,7 @@ if (typeof module !== 'undefined') module.exports = { navCalc: navCalc, breakEve
     el.addEventListener("input", function () {
       var v = parse(el.value), bad = isBad(f, v);
       document.getElementById("w-" + f.id).classList.toggle("bad", bad);
-      if (bad) invalid[f.id] = true; else { delete invalid[f.id]; state[f.id] = v; }
+      if (bad) invalid[f.id] = true; else { delete invalid[f.id]; state[f.id] = v; userSet[f.id] = true; }
       render(f.id);
     });
     el.addEventListener("blur", function () {
@@ -299,6 +323,7 @@ if (typeof module !== 'undefined') module.exports = { navCalc: navCalc, breakEve
   [["P", rP], ["X", rX]].forEach(function (p) {
     p[1].addEventListener("input", function () {
       state[p[0]] = parseFloat(p[1].value);
+      userSet[p[0]] = true;
       delete invalid[p[0]];
       document.getElementById("w-" + p[0]).classList.remove("bad");
       render();
@@ -328,6 +353,7 @@ if (typeof module !== 'undefined') module.exports = { navCalc: navCalc, breakEve
     var bigEl = document.getElementById("big"), verdict = document.getElementById("verdict"), delta = document.getElementById("delta");
     var s = pars(), be = breakEven(s);
     paintTrack(be);
+    renderLive();
     if (Object.keys(invalid).length) {
       bigEl.textContent = "n/a"; bigEl.classList.remove("neg"); delta.hidden = true;
       verdict.innerHTML = '<span class="err">Fix the highlighted field. It needs a positive number, and percentages cannot exceed 100.</span>';
@@ -364,7 +390,7 @@ if (typeof module !== 'undefined') module.exports = { navCalc: navCalc, breakEve
     var h = '<table><thead><tr><th scope="col"></th><th scope="colgroup" colspan="' + Xs.length + '">New SATS sold now</th></tr><tr><th scope="col">Bitcoin in a year</th>' +
       Xs.map(function (x) { return '<th scope="col">' + (x === 0 ? "None" : mil(x)) + '</th>'; }).join("") + '</tr></thead><tbody>';
     Ps.forEach(function (p) {
-      h += '<tr' + (p === state.P ? ' class="rowsel"' : '') + '><th scope="row">' + usd(p, 0) + (p === state.pb ? " (about today)" : "") + '</th>';
+      h += '<tr' + (p === state.P ? ' class="rowsel"' : '') + '><th scope="row">' + usd(p, 0) + (Math.abs(p - state.pb) < 500 ? " (about today)" : "") + '</th>';
       Xs.forEach(function (x) {
         var v = navCalc(s, p, x).nav, cls = [];
         if (v >= state.price) cls.push("ok"); else if (v < 0) cls.push("bad");
@@ -414,6 +440,50 @@ if (typeof module !== 'undefined') module.exports = { navCalc: navCalc, breakEve
     } catch (e) { fallback(); }
   });
 
+  var live = { asst: null, btc: null, time: null, ext: false, err: false, src: "" };
+  function renderLive() {
+    var asst = live.asst != null ? live.asst : state.price;
+    var btc = live.btc != null ? live.btc : state.pb;
+    var nav = (state.U0 * btc + state.cash * 1e6 - state.pref * 1e6) / state.S0;
+    document.getElementById("lv-asst").textContent = usd(asst);
+    document.getElementById("lv-btc").textContent = usd(btc, 0);
+    document.getElementById("lv-nav").textContent = usd(nav);
+    document.getElementById("lv-mnav").textContent = nav > 0 ? (asst / nav).toFixed(2) + "x" : "n/a";
+    var note = document.getElementById("lv-note"), dot = document.getElementById("lv-dot");
+    if (live.asst != null && live.btc != null) {
+      dot.classList.add("on");
+      var t = live.time ? new Date(live.time * 1000) : null;
+      var when = t ? t.toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "now";
+      var stale = t && (Date.now() - t.getTime() > 30 * 60 * 1000);
+      note.textContent = "Live prices. ASST " + (live.ext ? "extended-hours price" : (stale ? "last trade" : "price")) + " as of " + when + ", " + live.src + ". Updated every minute.";
+    } else if (live.err) {
+      dot.classList.remove("on");
+      note.textContent = "Live prices are unavailable right now. Showing the default ASST " + usd(state.price) + " and Bitcoin " + usd(state.pb, 0) + ".";
+    }
+  }
+  var firstLoad = true;
+  function loadLive() {
+    var ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
+    var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, 8000);
+    fetch("/api/quote", { cache: "no-store", signal: ctrl ? ctrl.signal : undefined })
+      .then(function (r) { if (!r.ok) throw new Error("status " + r.status); return r.json(); })
+      .then(function (j) {
+        clearTimeout(timer);
+        if (!(j.asst > 0) || !(j.btc > 0)) throw new Error("incomplete");
+        live.asst = j.asst; live.btc = j.btc; live.time = j.asstTime; live.ext = !!j.asstExtended;
+        live.src = j.asstSource || "market data"; live.err = false;
+        if (!userSet.price) state.price = Math.round(j.asst * 100) / 100;
+        if (!userSet.pb) state.pb = Math.round(j.btc);
+        if (firstLoad && !userSet.P) state.P = Math.min(160000, Math.max(40000, Math.round(j.btc / 1000) * 1000));
+        firstLoad = false;
+        var a = document.activeElement;
+        render(a && a.id && a.id.indexOf("f-") === 0 ? a.id.slice(2) : undefined);
+      })
+      .catch(function () { clearTimeout(timer); live.err = true; renderLive(); });
+  }
+
   render();
+  loadLive();
+  setInterval(function () { if (!document.hidden) loadLive(); }, 60000);
 })();
 </script>
