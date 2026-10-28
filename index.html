@@ -453,7 +453,7 @@ if (typeof module !== 'undefined') module.exports = { navCalc: navCalc, breakEve
     if (live.asst != null && live.btc != null) {
       dot.classList.add("on");
       var t = live.time ? new Date(live.time * 1000) : null;
-      var when = t ? t.toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "now";
+      var when = t ? t.toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "now";
       var stale = t && (Date.now() - t.getTime() > 30 * 60 * 1000);
       note.textContent = "Live prices. ASST " + (live.ext ? "extended-hours price" : (stale ? "last trade" : "price")) + " as of " + when + ", " + live.src + ". Updated every minute.";
     } else if (live.err) {
