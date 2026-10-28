@@ -46,7 +46,7 @@ body {
   padding-block: 28px 56px;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
-  display: flex; flex-direction: column; gap: 44px;
+  display: flex; flex-direction: column; gap: 32px;
 }
 h1, h2, h3 { font-family: var(--font-display); line-height: 1.12; margin: 0; text-wrap: balance; }
 h1 { font-size: clamp(1.8rem, 4.6vw, 2.9rem); font-weight: 700; letter-spacing: -0.01em; max-width: 20ch; }
@@ -54,7 +54,7 @@ h2 { font-size: 1.5rem; font-weight: 700; }
 h3 { font-size: 1.05rem; font-weight: 600; }
 p { margin: 0; }
 .eyebrow { font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
-.lede { color: var(--muted); max-width: 62ch; margin-top: 14px; }
+.lede { color: var(--muted); max-width: 56ch; margin-top: 10px; }
 .top { display: flex; flex-direction: column; gap: 10px; }
 
 .grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 20px; align-items: start; }
@@ -81,13 +81,7 @@ p { margin: 0; }
 .verdict { max-width: 52ch; }
 .verdict strong { font-weight: 600; }
 .err { color: var(--crit); font-weight: 500; }
-.stack { display: flex; flex-direction: column; gap: 8px; }
-.bar { display: flex; height: 18px; border-radius: 4px; overflow: hidden; background: var(--soft); border: 1px solid var(--line); }
-.bar .seg-pref { background: var(--pref); }
-.bar .seg-common { background: var(--accent); flex: 1; }
-.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.85rem; color: var(--muted); }
-.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; }
-.facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 20px; margin: 0; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px 20px; margin: 0; }
 .facts div { min-width: 0; border-top: 1px solid var(--line); padding-top: 10px; }
 .facts dt { font-size: 0.8rem; color: var(--muted); }
 .facts dd { margin: 2px 0 0; font-family: var(--font-mono); font-size: 0.98rem; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
@@ -95,11 +89,8 @@ p { margin: 0; }
 .btn:hover { border-color: var(--accent); }
 .copybox { width: 100%; font-family: var(--font-mono); font-size: 0.82rem; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--soft); color: var(--ink); resize: vertical; }
 
-.section { display: flex; flex-direction: column; gap: 18px; }
-.section > p.sub { color: var(--muted); max-width: 64ch; }
 .steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
-.steps li { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 16px; padding: 20px 0; border-top: 1px solid var(--line); }
-.steps li:last-child { border-bottom: 1px solid var(--line); }
+.steps li { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 16px; padding: 16px 0; border-top: 1px solid var(--line); }
 .num { font-family: var(--font-mono); font-size: 0.9rem; color: var(--accent); padding-top: 3px; }
 .steps .body { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .steps p { color: var(--muted); max-width: 66ch; }
@@ -117,11 +108,25 @@ tbody th { font-family: var(--font-mono); font-weight: 500; }
 td { font-family: var(--font-mono); }
 td.ok { background: var(--good-soft); color: var(--good); }
 td.sel { outline: 2px solid var(--accent); outline-offset: -2px; font-weight: 500; }
-.note { font-size: 0.85rem; color: var(--muted); max-width: 70ch; }
 
 .assump { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 20px; }
-.limits ul { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 8px; color: var(--muted); max-width: 70ch; }
-.limits li strong { color: var(--ink); font-weight: 600; }
+.limits-list { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 8px; color: var(--muted); max-width: 70ch; font-size: 0.92rem; }
+.limits-list li strong { color: var(--ink); font-weight: 600; }
+
+
+details.sec { border-top: 1px solid var(--line); }
+details.sec:last-of-type { border-bottom: 1px solid var(--line); }
+details.sec > summary, details.adv > summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+details.sec > summary::-webkit-details-marker, details.adv > summary::-webkit-details-marker { display: none; }
+details.sec > summary { padding: 16px 0; font-family: var(--font-display); font-size: 1.15rem; font-weight: 700; }
+details.adv > summary { padding-top: 16px; border-top: 1px solid var(--line); font-weight: 600; font-size: 0.92rem; }
+details > summary::after { content: "+"; font-family: var(--font-mono); color: var(--muted); }
+details[open] > summary::after { content: "-"; }
+details > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+details.sec .content { padding-bottom: 22px; display: flex; flex-direction: column; gap: 14px; }
+details.adv .content { display: flex; flex-direction: column; gap: 22px; padding-top: 18px; }
+.assump-h { font-weight: 600; font-size: 0.92rem; }
+.fine { color: var(--muted); font-size: 0.85rem; max-width: 70ch; }
 
 .dock { display: none; }
 @media (max-width: 899px) {
@@ -150,13 +155,23 @@ td.sel { outline: 2px solid var(--accent); outline-offset: -2px; font-weight: 50
 
 <main class="wrap">
   <header class="top">
-    <p class="eyebrow">$ASST scenario calculator</p>
     <h1>What mNAV does your $ASST price target require?</h1>
-    <p class="lede">Pick a target price and a Bitcoin scenario. The page shows what multiple of NAV the market has to pay for that price to hold, and walks through every step of the arithmetic. It is a scenario tool, not a forecast.</p>
+    <p class="lede">Choose a target price and a Bitcoin scenario. The page shows what multiple of NAV the market has to pay for that price.</p>
   </header>
 
   <div class="grid">
-    <section class="card inputs" aria-label="Scenario inputs" id="inputs"></section>
+    <section class="card inputs" aria-label="Scenario inputs">
+      <div id="main-fields" class="inputs"></div>
+      <details class="adv">
+        <summary>Advanced assumptions</summary>
+        <div class="content">
+          <div id="adv-fields" class="inputs"></div>
+          <p class="assump-h">Starting point</p>
+          <p class="fine">Taken from the Grain of Salt SF calculator page dated 23 October 2026 and not checked against Strive's filings. Replace them with your own numbers. The Bitcoin start price is a hypothetical start of the scenario.</p>
+          <div class="assump" id="assump"></div>
+        </div>
+      </details>
+    </section>
 
     <section class="card result" aria-label="Result">
       <div>
@@ -164,46 +179,40 @@ td.sel { outline: 2px solid var(--accent); outline-offset: -2px; font-weight: 50
         <p class="big" id="big" aria-live="polite">...</p>
       </div>
       <p class="verdict" id="verdict"></p>
-      <div class="stack" id="stackbox">
-        <p class="label">Ending BTC value, split by who is paid first</p>
-        <div class="bar" id="bar" role="img" aria-label="Preferred claims and common NAV as shares of ending BTC value"></div>
-        <div class="legend" id="legend"></div>
-      </div>
       <dl class="facts" id="facts"></dl>
       <button class="btn" id="copybtn" type="button">Copy summary</button>
       <textarea class="copybox" id="copybox" rows="4" readonly hidden aria-label="Summary text"></textarea>
+      <p class="fine">Scenario model, not a forecast or financial advice.</p>
     </section>
   </div>
 
-  <section class="section" aria-labelledby="how-h">
-    <h2 id="how-h">How the number is built</h2>
-    <p class="sub">mNAV is the share price divided by NAV per common share. NAV is the value of the Bitcoin minus what preferred holders are owed. The steps below use your current inputs, so every figure changes when you change a field.</p>
-    <ol class="steps" id="steps"></ol>
-  </section>
-
-  <section class="section" aria-labelledby="sens-h">
-    <h2 id="sens-h">Required mNAV for other targets</h2>
-    <p class="sub">Same Bitcoin scenario, different target prices and different prices for the new shares. Green cells are at or below the mNAV the market pays today on this page's definition.</p>
-    <div class="tablewrap" id="sens"></div>
-    <p class="note" id="sensnote"></p>
-  </section>
-
-  <section class="section" aria-labelledby="as-h">
-    <h2 id="as-h">Starting assumptions</h2>
-    <p class="sub">These come from the Grain of Salt SF calculator page dated 23 October 2026 and have not been checked against Strive's own filings. Replace them with your own numbers. The Bitcoin start price is a hypothetical start of the scenario, not today's price.</p>
-    <div class="assump" id="assump"></div>
-  </section>
-
-  <section class="section limits" aria-labelledby="lim-h">
-    <h2 id="lim-h">What this does not do</h2>
-    <ul>
-      <li><strong>No cash flows.</strong> Preferred dividends, interest, fees, operating costs and taxes are left out. All of them would lower NAV per share.</li>
-      <li><strong>Simplified financing.</strong> Preferred is valued at par. New preferred is raised in proportion to the Bitcoin bought, so claims end at the share of BTC value you chose. New common is sold at the multiple you chose, every time.</li>
-      <li><strong>One price path.</strong> Bitcoin moves in a smooth curve from the start price to the ending price. A real path with swings would give different dilution.</li>
-      <li><strong>Not a forecast and not financial advice.</strong> The result says what has to be true for a price, not that it will happen.</li>
-      <li><strong>Credit.</strong> The idea of asking "what mNAV does a price target need" comes from the Grain of Salt SF calculator. This page uses its own simplified model, so its numbers will not match theirs exactly.</li>
-    </ul>
-  </section>
+  <div>
+    <details class="sec">
+      <summary>How it is calculated</summary>
+      <div class="content">
+        <p class="fine">mNAV is the share price divided by NAV per common share. NAV is the Bitcoin value minus what preferred holders are owed. The steps use your current inputs.</p>
+        <ol class="steps" id="steps"></ol>
+      </div>
+    </details>
+    <details class="sec">
+      <summary>Other target prices</summary>
+      <div class="content">
+        <div class="tablewrap" id="sens"></div>
+        <p class="fine" id="sensnote"></p>
+      </div>
+    </details>
+    <details class="sec">
+      <summary>Limits and credit</summary>
+      <div class="content">
+        <ul class="limits-list">
+          <li><strong>No cash flows.</strong> Preferred dividends, interest, fees, operating costs and taxes are left out. All of them would lower NAV per share.</li>
+          <li><strong>Simplified financing.</strong> Preferred is valued at par and raised in proportion to the Bitcoin bought. New common is sold at the multiple you chose, every time.</li>
+          <li><strong>One price path.</strong> Bitcoin moves in a smooth curve from the start price to the ending price. A real path with swings would give different dilution.</li>
+          <li><strong>Credit.</strong> The idea of asking what mNAV a price target needs comes from the Grain of Salt SF calculator. This page uses its own simplified model, so its numbers will not match theirs exactly.</li>
+        </ul>
+      </div>
+    </details>
+  </div>
 </main>
 
 <div class="dock" aria-hidden="true"><span>Required mNAV</span><strong id="dockval">...</strong></div>
@@ -263,13 +272,14 @@ if (typeof module !== 'undefined') module.exports = { runModel: runModel, todayM
   }
   function x(v, d) { return v.toFixed(d == null ? 2 : d) + "x"; }
 
-  var MAIN = [
+  var MAIN_ALL = [
     { id: "target", label: "Target ASST price", pre: "$", chips: [50, 75, 100, 150, 200, 250, 300, 400], hint: "The share price you want to test." },
     { id: "pT", label: "Ending BTC price", pre: "$", chips: [100000, 125000, 150000, 175000, 200000, 225000, 250000, 300000], hint: "Bitcoin price when the company reaches the holdings below." },
     { id: "UT", label: "Ending BTC holdings", suf: "BTC", chips: [50000, 75000, 100000, 125000, 150000, 175000, 200000, 300000], hint: "Must be higher than the starting holdings." },
     { id: "A", label: "Preferred amplification", suf: "%", chips: [0, 10, 20, 30, 40, 50, 60, 70], hint: "Preferred claims as a share of Bitcoin value. 0% means no preferred." },
     { id: "m", label: "Issuance mNAV for new common", suf: "x", chips: [1, 1.25, 1.5, 1.75, 2], hint: "New shares are sold at this multiple of NAV per share. Higher means less dilution." }
   ];
+  var MAIN = MAIN_ALL.slice(0, 3), ADV = MAIN_ALL.slice(3);
   var ASSUME = [
     { id: "U0", label: "Starting BTC holdings", suf: "BTC" },
     { id: "S0", label: "Starting basic common shares" },
@@ -300,7 +310,8 @@ if (typeof module !== 'undefined') module.exports = { runModel: runModel, todayM
     if (hint) h += '<p class="hint">' + hint + '</p>';
     return h + '</div>';
   }
-  document.getElementById("inputs").innerHTML = MAIN.map(function (f) { return fieldHTML(f, true); }).join("");
+  document.getElementById("main-fields").innerHTML = MAIN.map(function (f) { return fieldHTML(f, true); }).join("");
+  document.getElementById("adv-fields").innerHTML = ADV.map(function (f) { return fieldHTML(f, true); }).join("");
   document.getElementById("assump").innerHTML = ASSUME.map(function (f) { return fieldHTML(f, false); }).join("");
 
   function parse(s) {
@@ -308,7 +319,7 @@ if (typeof module !== 'undefined') module.exports = { runModel: runModel, todayM
     if (t === "" || !/^-?\d*\.?\d*$/.test(t)) return NaN;
     return parseFloat(t);
   }
-  var all = MAIN.concat(ASSUME);
+  var all = MAIN_ALL.concat(ASSUME);
   var invalid = {};
 
   function syncInputs(skipId) {
@@ -337,7 +348,7 @@ if (typeof module !== 'undefined') module.exports = { runModel: runModel, todayM
       render();
     });
   });
-  document.getElementById("inputs").addEventListener("click", function (e) {
+  document.querySelector(".inputs").parentElement.addEventListener("click", function (e) {
     var b = e.target.closest(".chip");
     if (!b) return;
     var id = b.dataset.f;
@@ -355,7 +366,7 @@ if (typeof module !== 'undefined') module.exports = { runModel: runModel, todayM
   function render(skipId) {
     syncInputs(skipId);
     var bigEl = document.getElementById("big"), dock = document.getElementById("dockval"), verdict = document.getElementById("verdict");
-    var stackbox = document.getElementById("stackbox"), facts = document.getElementById("facts");
+    var facts = document.getElementById("facts");
     var p = pars();
     var r = runModel(p, state.m);
     var problem = null;
@@ -365,31 +376,22 @@ if (typeof module !== 'undefined') module.exports = { runModel: runModel, todayM
     if (problem) {
       bigEl.textContent = "n/a"; dock.textContent = "n/a";
       verdict.innerHTML = '<span class="err">' + problem + '</span>';
-      stackbox.hidden = true; facts.innerHTML = "";
+      facts.innerHTML = "";
       document.getElementById("steps").innerHTML = "";
       document.getElementById("sens").innerHTML = "";
       document.getElementById("sensnote").textContent = "";
       lastSummary = "";
       return;
     }
-    stackbox.hidden = false;
     var req = state.target / r.navEnd;
     var td = todayMnav(p, p.A);
     bigEl.textContent = x(req); dock.textContent = x(req);
     var priceAtToday = r.navEnd * td.mnav;
-    verdict.innerHTML = "For <strong>" + usd(state.target) + "</strong> a share, the market has to pay <strong>" + x(req) + "</strong> NAV per share when Bitcoin is " + usd(state.pT, 0) +
-      " and the company holds " + num(state.UT) + " BTC. On this page's definition it pays " + x(td.mnav) + " today, so the target needs about " + (req / td.mnav).toFixed(1) + " times today's multiple.";
-
-    var prefPct = state.A, comPct = 100 - state.A;
-    document.getElementById("bar").innerHTML = (prefPct > 0 ? '<div class="seg-pref" style="width:' + prefPct + '%"></div>' : '') + '<div class="seg-common"></div>';
-    document.getElementById("legend").innerHTML =
-      (prefPct > 0 ? '<span><i style="background:var(--pref)"></i>Preferred claims ' + big(r.PT) + ' (' + nf.format(prefPct) + '%)</span>' : '') +
-      '<span><i style="background:var(--accent)"></i>Common NAV ' + big(r.CT) + ' (' + nf.format(comPct) + '%)</span>';
+    verdict.innerHTML = "To reach <strong>" + usd(state.target) + "</strong> a share, the market has to pay <strong>" + x(req) + "</strong> NAV per share. Today it pays " + x(td.mnav) + " on the same measure, so the target needs about " + (req / td.mnav).toFixed(1) + " times the current multiple.";
 
     facts.innerHTML =
       '<div><dt>NAV per share, start to end</dt><dd>' + usd(r.navStart) + ' to ' + usd(r.navEnd) + '</dd></div>' +
       '<div><dt>Ending common shares</dt><dd>' + num(r.S) + ' (+' + (r.dilution * 100).toFixed(1) + '%)</dd></div>' +
-      '<div><dt>Time to reach the holdings</dt><dd>' + r.T.toFixed(2) + ' quarters, ' + (r.T / 4).toFixed(2) + ' years</dd></div>' +
       '<div><dt>Price if mNAV stays at ' + x(td.mnav) + '</dt><dd>' + usd(priceAtToday) + '</dd></div>';
 
     renderSteps(r, req, td);
@@ -450,7 +452,7 @@ if (typeof module !== 'undefined') module.exports = { runModel: runModel, todayM
       h += '</tr>';
     });
     document.getElementById("sens").innerHTML = h + '</tbody></table>';
-    document.getElementById("sensnote").textContent = "Today's mNAV on this definition: " + x(td.mnav) + " (ASST " + usd(state.todayPrice) + ", BTC " + usd(state.todayBTC, 0) + ", " + nf.format(state.A) + "% preferred). The outlined cell is your current selection.";
+    document.getElementById("sensnote").textContent = "Green cells are at or below today's mNAV on this definition: " + x(td.mnav) + " (ASST " + usd(state.todayPrice) + ", BTC " + usd(state.todayBTC, 0) + ", " + nf.format(state.A) + "% preferred). The outlined cell is your current selection.";
   }
 
   var copybtn = document.getElementById("copybtn"), copybox = document.getElementById("copybox");
