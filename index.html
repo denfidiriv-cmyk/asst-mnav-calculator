@@ -1,144 +1,136 @@
 <title>ASST Net Assets Calculator</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=JetBrains+Mono:wght@400;500&family=Public+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Sora:wght@600;700&display=swap">
 <style>
-/* Layout: two inputs and one answer side by side, the scenario grid under them, everything else folded away. */
+/* Layout: result on the left-top, two sliders beside it, everything else folded into three rows. Orange comes from the hamster. */
 :root {
-  --bg: #eef1f5;
+  --bg: #e6eef5;
   --surface: #ffffff;
-  --ink: #101722;
-  --muted: #566274;
-  --line: #d6dce5;
-  --soft: #f4f6f9;
-  --accent: #2446d8;
+  --ink: #0e2233;
+  --muted: #55697b;
+  --line: #c9d7e3;
+  --soft: #f0f5f9;
+  --accent: #d85a00;
   --accent-ink: #ffffff;
-  --good: #11743f;
-  --good-soft: #def3e6;
-  --crit: #b3261e;
-  --crit-soft: #fbe3e1;
-  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
-  --font-body: "Public Sans", "Segoe UI", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --good: #0f7a45;
+  --good-soft: #d9f1e3;
+  --crit: #c0291f;
+  --crit-soft: #fbe1de;
+  --font-display: "Sora", "Segoe UI", system-ui, sans-serif;
+  --font-body: "DM Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "DM Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0b1017; --surface: #131a24; --ink: #e8edf4; --muted: #95a1b3; --line: #263142; --soft: #18212d;
-    --accent: #8aa4ff; --accent-ink: #0b1017; --good: #5fd08c; --good-soft: #14301f; --crit: #ff8a80; --crit-soft: #3a1714;
+    --bg: #09141d; --surface: #11222f; --ink: #eaf2f8; --muted: #93a8b8; --line: #22384a; --soft: #162b3a;
+    --accent: #ff9440; --accent-ink: #1a0d00; --good: #55d18b; --good-soft: #123624; --crit: #ff8a7f; --crit-soft: #3d1b19;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #0b1017; --surface: #131a24; --ink: #e8edf4; --muted: #95a1b3; --line: #263142; --soft: #18212d;
-  --accent: #8aa4ff; --accent-ink: #0b1017; --good: #5fd08c; --good-soft: #14301f; --crit: #ff8a80; --crit-soft: #3a1714;
+  --bg: #09141d; --surface: #11222f; --ink: #eaf2f8; --muted: #93a8b8; --line: #22384a; --soft: #162b3a;
+  --accent: #ff9440; --accent-ink: #1a0d00; --good: #55d18b; --good-soft: #123624; --crit: #ff8a7f; --crit-soft: #3d1b19;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
 body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.55; }
 .wrap {
-  max-width: 1040px; margin: 0 auto; padding-block: 28px 56px;
+  max-width: 960px; margin: 0 auto; padding-block: 32px 48px;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
-  display: flex; flex-direction: column; gap: 28px;
+  display: flex; flex-direction: column; gap: 24px;
 }
-h1, h2, h3 { font-family: var(--font-display); line-height: 1.12; margin: 0; text-wrap: balance; }
-h1 { font-size: clamp(1.8rem, 4.6vw, 2.8rem); font-weight: 700; letter-spacing: -0.01em; max-width: 22ch; }
-h2 { font-size: 1.2rem; font-weight: 700; }
-h3 { font-size: 1.02rem; font-weight: 600; }
+h1, h2, h3 { font-family: var(--font-display); line-height: 1.15; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(1.6rem, 4.2vw, 2.4rem); font-weight: 700; letter-spacing: -0.015em; }
+h3 { font-size: 1rem; font-weight: 600; }
 p { margin: 0; }
-.lede { color: var(--muted); max-width: 58ch; margin-top: 10px; }
+.lede { color: var(--muted); margin-top: 8px; }
 .fine { color: var(--muted); font-size: 0.85rem; max-width: 70ch; }
-.label { font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.label { font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 
-.grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 20px; align-items: start; }
-.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 22px; min-width: 0; }
-.stackcol { display: flex; flex-direction: column; gap: 22px; }
-.field { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.field label { font-weight: 600; font-size: 0.92rem; }
-.hint { color: var(--muted); font-size: 0.82rem; }
-.inp { display: flex; align-items: center; border: 1px solid var(--line); border-radius: 8px; background: var(--soft); padding: 0 12px; min-width: 0; }
-.inp:focus-within { border-color: var(--accent); outline: 2px solid var(--accent); outline-offset: 1px; }
-.inp input { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--ink); font-family: var(--font-mono); font-size: 1.05rem; padding: 10px 0; outline: none; }
-.inp .pre, .inp .suf { color: var(--muted); font-family: var(--font-mono); font-size: 0.95rem; }
-.inp .pre { margin-right: 6px; } .inp .suf { margin-left: 8px; }
-.inp.bad { border-color: var(--crit); }
-.chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip { font-family: var(--font-mono); font-size: 0.8rem; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
-.chip:hover { border-color: var(--accent); }
-.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
-.chip:focus-visible, .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-
-.result { display: flex; flex-direction: column; gap: 18px; position: sticky; top: calc(16px + env(safe-area-inset-top, 0px)); }
-.big { font-family: var(--font-display); font-weight: 700; font-size: clamp(3.4rem, 11vw, 5.6rem); line-height: 1; letter-spacing: -0.02em; color: var(--accent); font-variant-numeric: tabular-nums; margin-top: 4px; }
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: stretch; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 24px; min-width: 0; }
+.result { display: flex; flex-direction: column; gap: 14px; justify-content: center; }
+.big { font-family: var(--font-display); font-weight: 700; font-size: clamp(3.4rem, 12vw, 5.4rem); line-height: 1; letter-spacing: -0.03em; color: var(--accent); font-variant-numeric: tabular-nums; }
 .big.neg { color: var(--crit); }
-.delta { display: inline-block; align-self: flex-start; font-family: var(--font-mono); font-size: 0.88rem; padding: 4px 10px; border-radius: 6px; background: var(--soft); color: var(--muted); }
+.delta { align-self: flex-start; font-family: var(--font-mono); font-size: 0.85rem; padding: 4px 10px; border-radius: 999px; background: var(--soft); color: var(--muted); }
 .delta.up { background: var(--good-soft); color: var(--good); }
 .delta.down { background: var(--crit-soft); color: var(--crit); }
-.verdict { max-width: 54ch; }
-.verdict strong { font-weight: 600; }
+.verdict { max-width: 44ch; }
+.verdict strong { font-weight: 700; }
 .err { color: var(--crit); font-weight: 500; }
-.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px 20px; margin: 0; }
-.facts div { min-width: 0; border-top: 1px solid var(--line); padding-top: 10px; }
-.facts dt { font-size: 0.8rem; color: var(--muted); }
-.facts dd { margin: 2px 0 0; font-family: var(--font-mono); font-size: 0.98rem; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-.btn { font-family: var(--font-body); font-weight: 600; font-size: 0.9rem; padding: 9px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; align-self: flex-start; }
+.btn { font-family: var(--font-body); font-weight: 700; font-size: 0.88rem; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; align-self: flex-start; }
 .btn:hover { border-color: var(--accent); }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .copybox { width: 100%; font-family: var(--font-mono); font-size: 0.82rem; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--soft); color: var(--ink); resize: vertical; }
+
+.inputs { display: flex; flex-direction: column; gap: 30px; justify-content: center; }
+.ctl { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.ctl-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.ctl-top label { font-weight: 700; }
+.inp { display: flex; align-items: center; border: 1px solid var(--line); border-radius: 8px; background: var(--soft); padding: 0 10px; width: 9.5rem; min-width: 0; }
+.inp:focus-within { border-color: var(--accent); outline: 2px solid var(--accent); outline-offset: 1px; }
+.inp input { flex: 1; min-width: 0; width: 100%; border: 0; background: transparent; color: var(--ink); font-family: var(--font-mono); font-size: 1rem; font-weight: 500; padding: 7px 0; text-align: right; outline: none; }
+.inp .pre, .inp .suf { color: var(--muted); font-family: var(--font-mono); font-size: 0.9rem; }
+.inp .pre { margin-right: 4px; } .inp .suf { margin-left: 4px; }
+.inp.bad { border-color: var(--crit); }
+.rng { position: relative; padding-top: 22px; }
+.rng input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 30px; background: transparent; margin: 0; cursor: pointer; display: block; }
+.rng input[type="range"]::-webkit-slider-runnable-track { height: 10px; border-radius: 5px; background: var(--trackbg, var(--line)); border: 1px solid var(--line); }
+.rng input[type="range"]::-moz-range-track { height: 8px; border-radius: 5px; background: var(--trackbg, var(--line)); border: 1px solid var(--line); }
+.rng input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 28px; height: 28px; border-radius: 50%; background: var(--accent); border: 4px solid var(--surface); box-shadow: 0 0 0 1px var(--line), 0 2px 6px rgba(0,0,0,0.3); margin-top: -10px; }
+.rng input[type="range"]::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: var(--accent); border: 4px solid var(--surface); box-shadow: 0 0 0 1px var(--line), 0 2px 6px rgba(0,0,0,0.3); }
+.rng input[type="range"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 6px; }
+.mark { position: absolute; top: 0; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; pointer-events: none; font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); white-space: nowrap; }
+.mark i { display: block; width: 2px; height: 14px; background: var(--ink); opacity: 0.55; margin-top: 2px; }
+.ends { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted); }
 
 .tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
 table { border-collapse: collapse; width: 100%; min-width: 460px; font-variant-numeric: tabular-nums; }
-th, td { padding: 10px 14px; text-align: right; border-bottom: 1px solid var(--line); font-size: 0.92rem; }
+th, td { padding: 9px 14px; text-align: right; border-bottom: 1px solid var(--line); font-size: 0.9rem; }
 th:first-child, td:first-child { text-align: left; }
-thead th { font-family: var(--font-mono); font-weight: 500; font-size: 0.78rem; color: var(--muted); background: var(--soft); }
+thead th { font-family: var(--font-mono); font-weight: 500; font-size: 0.75rem; color: var(--muted); background: var(--soft); }
 thead tr:first-child th { border-bottom: 0; padding-bottom: 2px; }
 tbody tr:last-child th, tbody tr:last-child td { border-bottom: 0; }
-tbody th { font-family: var(--font-mono); font-weight: 500; font-size: 0.88rem; }
+tbody th { font-family: var(--font-mono); font-weight: 500; font-size: 0.86rem; }
 td { font-family: var(--font-mono); }
 td.ok { background: var(--good-soft); color: var(--good); }
 td.bad { background: var(--crit-soft); color: var(--crit); }
 td.sel { outline: 2px solid var(--accent); outline-offset: -2px; font-weight: 500; }
 tr.rowsel th { color: var(--accent); }
 tfoot th, tfoot td { background: var(--soft); border-top: 1px solid var(--line); border-bottom: 0; }
-tfoot th { font-family: var(--font-body); font-weight: 500; font-size: 0.85rem; color: var(--muted); }
-.key { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.82rem; color: var(--muted); }
+tfoot th { font-family: var(--font-body); font-weight: 500; font-size: 0.82rem; color: var(--muted); }
+.key { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.8rem; color: var(--muted); }
 .key i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; }
 
 details.sec { border-top: 1px solid var(--line); }
-details.sec:last-child { border-bottom: 1px solid var(--line); }
-details.sec > summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 16px 0; font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; }
+details.sec:last-of-type { border-bottom: 1px solid var(--line); }
+details.sec > summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 15px 0; font-weight: 700; }
 details.sec > summary::-webkit-details-marker { display: none; }
 details > summary::after { content: "+"; font-family: var(--font-mono); color: var(--muted); }
 details[open] > summary::after { content: "-"; }
 details > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-details.sec .content { padding-bottom: 22px; display: flex; flex-direction: column; gap: 16px; }
-.assump { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 20px; }
+details.sec .content { padding-bottom: 20px; display: flex; flex-direction: column; gap: 14px; }
+.assump { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 20px; }
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.field label { font-weight: 500; font-size: 0.9rem; }
+.field .inp { width: 100%; }
+.field .inp input { text-align: left; }
+.hint { color: var(--muted); font-size: 0.8rem; }
 .steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 .steps li { display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 12px; padding: 14px 0; border-top: 1px solid var(--line); }
-.num { font-family: var(--font-mono); font-size: 0.88rem; color: var(--accent); padding-top: 2px; }
+.num { font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); padding-top: 2px; }
 .steps .body { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-.steps p { color: var(--muted); font-size: 0.92rem; max-width: 64ch; }
-.calc { font-family: var(--font-mono); font-size: 0.85rem; background: var(--soft); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; overflow-x: auto; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.limits-list { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 8px; color: var(--muted); max-width: 70ch; font-size: 0.92rem; }
-.limits-list strong { color: var(--ink); font-weight: 600; }
+.steps p { color: var(--muted); font-size: 0.9rem; max-width: 64ch; }
+.calc { font-family: var(--font-mono); font-size: 0.82rem; background: var(--soft); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; overflow-x: auto; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.limits-list { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 8px; color: var(--muted); max-width: 70ch; font-size: 0.9rem; }
+.limits-list strong { color: var(--ink); font-weight: 700; }
+.foot { text-align: left; }
 
-.dock { display: none; }
-@media (max-width: 899px) {
+@media (max-width: 760px) {
   .grid { grid-template-columns: minmax(0, 1fr); }
-  .result { position: static; }
-  .wrap { padding-bottom: 96px; }
-  .dock {
-    display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
-    position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
-    background: var(--surface); border-top: 1px solid var(--line); padding-top: 10px;
-    padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
-    padding-left: max(16px, env(safe-area-inset-left, 0px));
-    padding-right: max(16px, env(safe-area-inset-right, 0px));
-  }
-  .dock span { font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
-  .dock strong { font-family: var(--font-display); font-size: 1.7rem; color: var(--accent); font-variant-numeric: tabular-nums; }
-  .dock strong.neg { color: var(--crit); }
-}
-@media (max-width: 560px) {
-  .card { padding: 16px; }
+  .result { order: -1; }
+  .card { padding: 18px; }
   .assump { grid-template-columns: minmax(0, 1fr); }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
@@ -146,61 +138,73 @@ details.sec .content { padding-bottom: 22px; display: flex; flex-direction: colu
 
 <main class="wrap">
   <header>
-    <h1>What are $ASST net assets per share if Strive sells more SATS?</h1>
-    <p class="lede">Pick the Bitcoin price a year from now and how much new SATS is sold today. The page shows what each common share is backed by, and the Bitcoin price above which new SATS stops hurting common holders.</p>
+    <h1>$ASST net assets per share in a year</h1>
+    <p class="lede">Move the sliders to see what each share is backed by when Strive sells new SATS.</p>
   </header>
 
   <div class="grid">
-    <section class="card stackcol" aria-label="Scenario inputs">
-      <div id="main-fields" class="stackcol"></div>
+    <section class="card inputs" aria-label="Scenario inputs">
+      <div class="ctl">
+        <div class="ctl-top">
+          <label for="f-P">Bitcoin price in a year</label>
+          <div class="inp" id="w-P"><span class="pre">$</span><input id="f-P" type="text" inputmode="decimal" autocomplete="off" spellcheck="false"></div>
+        </div>
+        <div class="rng">
+          <span class="mark" id="mark" hidden><b id="marktxt"></b><i></i></span>
+          <input id="r-P" type="range" min="40000" max="160000" step="1000" aria-label="Bitcoin price in a year">
+        </div>
+        <div class="ends"><span>$40K</span><span>$160K</span></div>
+      </div>
+      <div class="ctl">
+        <div class="ctl-top">
+          <label for="f-X">New SATS sold now</label>
+          <div class="inp" id="w-X"><span class="pre">$</span><input id="f-X" type="text" inputmode="decimal" autocomplete="off" spellcheck="false"><span class="suf">M</span></div>
+        </div>
+        <div class="rng">
+          <input id="r-X" type="range" min="0" max="3000" step="50" aria-label="New SATS sold now, in millions of dollars">
+        </div>
+        <div class="ends"><span>None</span><span>$3B</span></div>
+      </div>
     </section>
 
     <section class="card result" aria-label="Result">
-      <div>
-        <p class="label">Net assets per share in a year</p>
-        <p class="big" id="big" aria-live="polite">...</p>
-      </div>
+      <p class="label">Net assets per share</p>
+      <p class="big" id="big" aria-live="polite">...</p>
       <p class="delta" id="delta"></p>
       <p class="verdict" id="verdict"></p>
-      <dl class="facts" id="facts"></dl>
       <button class="btn" id="copybtn" type="button">Copy summary</button>
       <textarea class="copybox" id="copybox" rows="4" readonly hidden aria-label="Summary text"></textarea>
     </section>
   </div>
 
-  <section class="stackcol" aria-labelledby="grid-h">
-    <h2 id="grid-h">All scenarios</h2>
-    <div class="tablewrap" id="sens"></div>
-    <div class="key" id="key"></div>
-  </section>
-
   <div>
+    <details class="sec">
+      <summary>All scenarios</summary>
+      <div class="content">
+        <div class="tablewrap" id="sens"></div>
+        <div class="key" id="key"></div>
+      </div>
+    </details>
     <details class="sec">
       <summary>How it is calculated</summary>
       <div class="content"><ol class="steps" id="steps"></ol></div>
     </details>
     <details class="sec">
-      <summary>Assumptions you can change</summary>
+      <summary>Assumptions and limits</summary>
       <div class="content">
         <p class="fine">Defaults are the starting numbers behind the net-asset grid in the author's post of 28 October 2026. Replace them with your own.</p>
         <div class="assump" id="assump"></div>
-      </div>
-    </details>
-    <details class="sec">
-      <summary>Limits</summary>
-      <div class="content">
         <ul class="limits-list">
-          <li><strong>Left out by default.</strong> Dividends on the preferred already outstanding, new common shares, operating costs and taxes. All of them would lower net assets per share. The field for existing dividends is in the assumptions.</li>
+          <li><strong>Left out by default.</strong> Dividends on the preferred already outstanding, new common shares, operating costs and taxes. All of them would lower net assets per share.</li>
           <li><strong>Simplified new SATS.</strong> It is sold today, a fixed share of its face value buys Bitcoin at today's price, and one year of its dividends is deducted.</li>
-          <li><strong>Preferred at par.</strong> Claims are counted at face value, with no market discount.</li>
+          <li><strong>Preferred at par.</strong> Claims are counted at face value.</li>
           <li><strong>Scenario, not forecast.</strong> The page shows what has to be true for a result. It is not financial advice.</li>
         </ul>
       </div>
     </details>
   </div>
+  <p class="fine foot">By @hamsteriniio on X</p>
 </main>
-
-<div class="dock" aria-hidden="true"><span>Net assets / share</span><strong id="dockval">...</strong></div>
 
 <script>
 /* Net assets per common share one year out.
@@ -240,40 +244,27 @@ if (typeof module !== 'undefined') module.exports = { navCalc: navCalc, breakEve
   function bigD(v) { return mil(v / 1e6); }
   function kfmt(v) { return "$" + num(Math.round(v / 1000)) + "K"; }
 
-  var MAIN = [
-    { id: "P", label: "Bitcoin price in a year", pre: "$", chips: [50000, 60000, 70000, 80000, 100000, 120000, 150000], chip: function (c) { return kfmt(c); }, hint: "Where Bitcoin trades at the end of the year." },
-    { id: "X", label: "New SATS sold now", pre: "$", suf: "M", zero: true, chips: [0, 250, 500, 1000, 2000], chip: function (c) { return c === 0 ? "None" : mil(c); }, hint: "Face value, in millions of dollars. Strive sold $700M of SATS on 20 October." }
-  ];
+  var MAIN = [{ id: "P" }, { id: "X", zero: true }];
   var ASSUME = [
     { id: "U0", label: "Bitcoin held now", suf: "BTC", hint: "43,000 BTC per Strive's 8-K of 26 October." },
     { id: "S0", label: "Common shares", hint: "Basic shares outstanding." },
     { id: "pref", label: "Preferred claims today", pre: "$", suf: "M", hint: "SATA $1,403M plus SATS $700M, at par." },
     { id: "cash", label: "Cash and other assets", pre: "$", suf: "M", zero: true, hint: "Counted on top of Bitcoin." },
-    { id: "divOld", label: "Dividends on existing preferred over the year", pre: "$", suf: "M", zero: true, hint: "Left out in the post's grid. At today's rates it is about $287M a year." },
-    { id: "price", label: "ASST price today", pre: "$", hint: "Used to color the grid and compare." },
+    { id: "divOld", label: "Dividends on existing preferred over the year", pre: "$", suf: "M", zero: true, hint: "Left out in the post's grid. About $287M a year at today's rates." },
+    { id: "price", label: "ASST price today", pre: "$", hint: "Used to color the grid." },
     { id: "pb", label: "Bitcoin price when new SATS is invested", pre: "$" },
     { id: "f", label: "Share of new SATS invested in Bitcoin", suf: "%", pct: true, hint: "The rest covers the issue discount, fees and reserves." },
     { id: "d", label: "Dividends on new SATS in the first year", suf: "%", pct: true, zero: true, hint: "As a share of face value." }
   ];
   var all = MAIN.concat(ASSUME);
 
-  function fieldHTML(f, withChips) {
-    var h = '<div class="field"><label for="f-' + f.id + '">' + f.label + '</label>';
-    h += '<div class="inp" id="w-' + f.id + '">' + (f.pre ? '<span class="pre">' + f.pre + '</span>' : '') +
+  document.getElementById("assump").innerHTML = ASSUME.map(function (f) {
+    return '<div class="field"><label for="f-' + f.id + '">' + f.label + '</label>' +
+      '<div class="inp" id="w-' + f.id + '">' + (f.pre ? '<span class="pre">' + f.pre + '</span>' : '') +
       '<input id="f-' + f.id + '" type="text" inputmode="decimal" autocomplete="off" spellcheck="false">' +
-      (f.suf ? '<span class="suf">' + f.suf + '</span>' : '') + '</div>';
-    if (withChips) {
-      h += '<div class="chips" role="group" aria-label="' + f.label + ' presets">';
-      f.chips.forEach(function (c) {
-        h += '<button class="chip" type="button" data-f="' + f.id + '" data-v="' + c + '" aria-pressed="false">' + f.chip(c) + '</button>';
-      });
-      h += '</div>';
-    }
-    if (f.hint) h += '<p class="hint">' + f.hint + '</p>';
-    return h + '</div>';
-  }
-  document.getElementById("main-fields").innerHTML = MAIN.map(function (f) { return fieldHTML(f, true); }).join("");
-  document.getElementById("assump").innerHTML = ASSUME.map(function (f) { return fieldHTML(f, false); }).join("");
+      (f.suf ? '<span class="suf">' + f.suf + '</span>' : '') + '</div>' +
+      (f.hint ? '<p class="hint">' + f.hint + '</p>' : '') + '</div>';
+  }).join("");
 
   function parse(s) {
     var t = String(s).replace(/[$,\s%]/g, "");
@@ -283,13 +274,12 @@ if (typeof module !== 'undefined') module.exports = { navCalc: navCalc, breakEve
   var invalid = {};
   function isBad(f, v) { return isNaN(v) || v < 0 || (!f.zero && v === 0) || (f.pct && v > 100); }
 
+  var rP = document.getElementById("r-P"), rX = document.getElementById("r-X");
   function syncInputs(skipId) {
     all.forEach(function (f) {
       if (f.id !== skipId) document.getElementById("f-" + f.id).value = nf.format(state[f.id]);
     });
-    document.querySelectorAll(".chip").forEach(function (c) {
-      c.setAttribute("aria-pressed", String(parseFloat(c.dataset.v) === state[c.dataset.f]));
-    });
+    rP.value = state.P; rX.value = state.X;
   }
   all.forEach(function (f) {
     var el = document.getElementById("f-" + f.id);
@@ -306,13 +296,13 @@ if (typeof module !== 'undefined') module.exports = { navCalc: navCalc, breakEve
       render();
     });
   });
-  document.getElementById("main-fields").addEventListener("click", function (e) {
-    var b = e.target.closest(".chip");
-    if (!b) return;
-    state[b.dataset.f] = parseFloat(b.dataset.v);
-    delete invalid[b.dataset.f];
-    document.getElementById("w-" + b.dataset.f).classList.remove("bad");
-    render();
+  [["P", rP], ["X", rX]].forEach(function (p) {
+    p[1].addEventListener("input", function () {
+      state[p[0]] = parseFloat(p[1].value);
+      delete invalid[p[0]];
+      document.getElementById("w-" + p[0]).classList.remove("bad");
+      render();
+    });
   });
 
   function pars() {
@@ -320,42 +310,46 @@ if (typeof module !== 'undefined') module.exports = { navCalc: navCalc, breakEve
   }
 
   var lastSummary = "";
+  function paintTrack(be) {
+    var min = +rP.min, max = +rP.max, mark = document.getElementById("mark");
+    var show = state.X > 0 && isFinite(be) && be > min && be < max;
+    if (show) {
+      var pct = (be - min) / (max - min) * 100;
+      rP.style.setProperty("--trackbg", "linear-gradient(90deg, var(--crit-soft) " + pct + "%, var(--good-soft) " + pct + "%)");
+      mark.hidden = false; mark.style.left = "calc(" + pct + "% + " + (14 - pct * 0.28) + "px)";
+      document.getElementById("marktxt").textContent = "break-even " + kfmt(be);
+    } else {
+      rP.style.removeProperty("--trackbg"); mark.hidden = true;
+    }
+  }
+
   function render(skipId) {
     syncInputs(skipId);
-    var bigEl = document.getElementById("big"), dock = document.getElementById("dockval");
-    var verdict = document.getElementById("verdict"), delta = document.getElementById("delta"), facts = document.getElementById("facts");
+    var bigEl = document.getElementById("big"), verdict = document.getElementById("verdict"), delta = document.getElementById("delta");
+    var s = pars(), be = breakEven(s);
+    paintTrack(be);
     if (Object.keys(invalid).length) {
-      bigEl.textContent = "n/a"; dock.textContent = "n/a"; bigEl.classList.remove("neg"); dock.classList.remove("neg");
-      delta.hidden = true; facts.innerHTML = "";
+      bigEl.textContent = "n/a"; bigEl.classList.remove("neg"); delta.hidden = true;
       verdict.innerHTML = '<span class="err">Fix the highlighted field. It needs a positive number, and percentages cannot exceed 100.</span>';
       lastSummary = "";
       return;
     }
     delta.hidden = false;
-    var s = pars();
-    var r = navCalc(s, state.P, state.X), r0 = navCalc(s, state.P, 0);
-    var be = breakEven(s), d = r.nav - r0.nav;
+    var r = navCalc(s, state.P, state.X), r0 = navCalc(s, state.P, 0), d = r.nav - r0.nav;
     var txt = usd(r.nav);
-    bigEl.textContent = txt; dock.textContent = txt;
-    bigEl.classList.toggle("neg", r.nav < 0); dock.classList.toggle("neg", r.nav < 0);
+    bigEl.textContent = txt; bigEl.classList.toggle("neg", r.nav < 0);
 
     if (state.X === 0) {
       delta.className = "delta"; delta.textContent = "No new SATS";
       verdict.innerHTML = r.nav < 0
         ? "At Bitcoin " + usd(state.P, 0) + " the preferred claims are larger than the assets, so common holders are left with nothing."
-        : "At Bitcoin <strong>" + usd(state.P, 0) + "</strong> each share is backed by <strong>" + txt + "</strong> of net assets. That is " + Math.round(r.nav / state.price * 100) + "% of today's " + usd(state.price) + " price.";
+        : "At Bitcoin <strong>" + usd(state.P, 0) + "</strong> each share is backed by <strong>" + txt + "</strong>. ASST trades at " + usd(state.price) + " today.";
     } else {
       delta.className = "delta " + (d > 0 ? "up" : (d < 0 ? "down" : ""));
       delta.textContent = (d >= 0 ? "+" : "") + usd(d) + " vs no new SATS";
-      var tail = isFinite(be) ? (state.P > be ? " Bitcoin is above " + usd(be, 0) + ", so the new SATS adds to net assets per share." : " New SATS helps common holders only if Bitcoin ends the year above " + usd(be, 0) + ".") : "";
-      verdict.innerHTML = "At Bitcoin <strong>" + usd(state.P, 0) + "</strong>, selling <strong>" + mil(state.X) + "</strong> of new SATS " + (d < 0 ? "lowers" : "raises") + " net assets per share by <strong>" + usd(Math.abs(d)) + "</strong> compared with selling none." + tail;
+      var tail = isFinite(be) ? (state.P > be ? " Bitcoin is above " + usd(be, 0) + ", so it adds value." : " It helps common holders only above Bitcoin " + usd(be, 0) + ".") : "";
+      verdict.innerHTML = "At Bitcoin <strong>" + usd(state.P, 0) + "</strong>, <strong>" + mil(state.X) + "</strong> of new SATS " + (d < 0 ? "lowers" : "raises") + " net assets per share by <strong>" + usd(Math.abs(d)) + "</strong>." + tail;
     }
-    var need = btcNeeded(s, state.X, state.price);
-    facts.innerHTML =
-      '<div><dt>ASST today, as a multiple of this</dt><dd>' + (r.nav > 0 ? (state.price / r.nav).toFixed(2) + "x" : "n/a") + '</dd></div>' +
-      '<div><dt>Bitcoin needed to reach ' + usd(state.price) + '</dt><dd>' + usd(need, 0) + '</dd></div>' +
-      '<div><dt>New SATS stops hurting above</dt><dd>' + (isFinite(be) ? usd(be, 0) : "n/a") + '</dd></div>';
-
     renderGrid(s);
     renderSteps(r);
     lastSummary = "$ASST net assets per share in a year: " + txt + " at Bitcoin " + usd(state.P, 0) + (state.X > 0 ? " with " + mil(state.X) + " of new SATS sold now (" + usd(r0.nav) + " with none)" : " with no new SATS") +
